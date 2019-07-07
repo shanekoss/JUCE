@@ -41,6 +41,9 @@ namespace juce
 class JUCE_API  OSCArgument
 {
 public:
+    /** Constructs an OSCArgument with type bool and a given value. */
+    OSCArgument (bool value);
+    
     /** Constructs an OSCArgument with type int32 and a given value. */
     OSCArgument (int32 value);
 
@@ -66,6 +69,9 @@ public:
     */
     OSCType getType() const noexcept        { return type; }
 
+    /** Returns whether the type of the OSCArgument is bool. */
+    bool isBool() const noexcept           { return type == OSCTypes::boolean; }
+    
     /** Returns whether the type of the OSCArgument is int32. */
     bool isInt32() const noexcept           { return type == OSCTypes::int32; }
 
@@ -81,6 +87,11 @@ public:
     /** Returns whether the type of the OSCArgument is blob. */
     bool isColour() const noexcept          { return type == OSCTypes::colour; }
 
+    /** Returns the value of the OSCArgument as an bool.
+     If the type of the OSCArgument is not bool, the behaviour is undefined.
+     */
+    bool getBool() const noexcept;
+    
     /** Returns the value of the OSCArgument as an int32.
         If the type of the OSCArgument is not int32, the behaviour is undefined.
     */
@@ -114,6 +125,7 @@ private:
 
     union
     {
+        bool boolValue;
         int32 intValue;
         float floatValue;
     };

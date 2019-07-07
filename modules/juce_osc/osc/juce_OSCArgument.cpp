@@ -26,7 +26,7 @@
 
 namespace juce
 {
-
+OSCArgument::OSCArgument (bool v)              : type (OSCTypes::boolean),  boolValue (v) {}
 OSCArgument::OSCArgument (int32 v)              : type (OSCTypes::int32),   intValue (v) {}
 OSCArgument::OSCArgument (float v)              : type (OSCTypes::float32), floatValue (v) {}
 OSCArgument::OSCArgument (const String& s)      : type (OSCTypes::string),  stringValue (s) {}
@@ -41,6 +41,15 @@ String OSCArgument::getString() const noexcept
 
     jassertfalse; // you must check the type of an argument before attempting to get its value!
     return {};
+}
+    
+bool OSCArgument::getBool() const noexcept
+{
+    if (isBool())
+        return boolValue;
+    
+    jassertfalse; // you must check the type of an argument before attempting to get its value!
+    return 0;
 }
 
 int32 OSCArgument::getInt32() const noexcept
