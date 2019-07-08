@@ -96,6 +96,12 @@ namespace
             return input.readFloatBigEndian();
         }
 
+        float readFloat32OSC()
+        {
+            //checkBytesAvailable (4, "OSC input stream exhausted while reading float");
+            return input.readFloatBigEndian();
+        }
+        
         String readString()
         {
             checkBytesAvailable (4, "OSC input stream exhausted while reading string");
@@ -188,6 +194,7 @@ namespace
             {
                 case OSCTypes::int32:       return OSCArgument (readInt32());
                 case OSCTypes::float32:     return OSCArgument (readFloat32());
+                case OSCTypes::float32OSC:   return OSCArgument (readFloat32OSC());
                 case OSCTypes::string:      return OSCArgument (readString());
                 case OSCTypes::blob:        return OSCArgument (readBlob());
                 case OSCTypes::colour:      return OSCArgument (readColour());
@@ -438,7 +445,7 @@ struct OSCReceiver::Pimpl   : private Thread,
                 content.getMessage().addString(address);
             }
             if(content.isBundle()){
-                for(OSCBundle::Element element : content.getBundle()){
+                for(OSCBundle::Element& element : content.getBundle()){
                     element.getMessage().addString(address);
                 }
             }
