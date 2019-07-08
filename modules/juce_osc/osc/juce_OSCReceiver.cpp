@@ -72,6 +72,12 @@ namespace
         bool isExhausted()                          { return input.isExhausted(); }
 
         //==============================================================================
+        bool readBoolean()
+        {
+            //checkBytesAvailable (4, "OSC input stream exhausted while reading int32");
+            return input.readBool();
+        }
+        
         int32 readInt32()
         {
             checkBytesAvailable (4, "OSC input stream exhausted while reading int32");
@@ -185,6 +191,7 @@ namespace
                 case OSCTypes::string:      return OSCArgument (readString());
                 case OSCTypes::blob:        return OSCArgument (readBlob());
                 case OSCTypes::colour:      return OSCArgument (readColour());
+                case OSCTypes::boolean:     return OSCArgument (readBoolean());
 
                 default:
                     // You supplied an invalid OSCType when calling readArgument! This should never happen.
@@ -419,14 +426,22 @@ struct OSCReceiver::Pimpl   : private Thread,
     };
 
     //==============================================================================
-    void handleBuffer (const char* data, size_t dataSize)
+    void handleBuffer (const char* data, String& address, size_t dataSize)
     {
         OSCInputStream inStream (data, dataSize);
 
         try
         {
             auto content = inStream.readElementWithKnownSize (dataSize);
-
+            
+            if(content.isMessage()){
+                content.getMessage().addString(address);
+            }
+            if(content.isBundle()){
+                for(OSCBundle::Element element : content.getBundle()){
+                    element.getMessage().addString(address);
+                }
+            }
             // realtime listeners should receive the OSC content first - and immediately
             // on this thread:
             callRealtimeListeners (content);
@@ -469,11 +484,14 @@ private:
 
             if (ready == 0)
                 continue;
-
-            auto bytesRead = (size_t) socket->read (oscBuffer.getData(), bufferSize, false);
+            
+            String address;
+            int port;
+            
+            auto bytesRead = (size_t) socket->read (oscBuffer.getData(), bufferSize, false, address, port);
 
             if (bytesRead >= 4)
-                handleBuffer (oscBuffer.getData(), bytesRead);
+                handleBuffer (oscBuffer.getData(), address, bytesRead);
         }
     }
 
@@ -536,6 +554,7 @@ private:
         else if (content.isBundle())
         {
             auto&& bundle = content.getBundle();
+            
             listeners.call ([&] (Listener& l) { l.oscBundleReceived (bundle); });
         }
     }

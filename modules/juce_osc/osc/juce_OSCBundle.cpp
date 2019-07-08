@@ -83,7 +83,7 @@ bool OSCBundle::Element::isBundle() const noexcept
 }
 
 //==============================================================================
-const OSCMessage& OSCBundle::Element::getMessage() const
+OSCMessage& OSCBundle::Element::getMessage() const
 {
     if (message == nullptr)
     {
