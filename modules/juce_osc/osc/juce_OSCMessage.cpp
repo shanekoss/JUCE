@@ -104,9 +104,10 @@ public:
             expectEquals (msg.size(), 0);
             expect (msg.getAddressPattern().toString() == "/test/param0");
 
-            const int numTestArgs = 5;
+            const int numTestArgs = 3;
 
             const int testInt = 42;
+            const bool testBool = true;
             const float testFloat = 3.14159f;
             const String testString = "Hello, World!";
             const OSCColour testColour = { 10, 20, 150, 200 };
@@ -119,7 +120,8 @@ public:
             msg.addString (testString);
             msg.addBlob (testBlob);
             msg.addColour (testColour);
-
+            msg.addBool(testBool);
+            
             expectEquals (msg.size(), numTestArgs);
 
             expectEquals (msg[0].getType(), OSCTypes::int32);
@@ -127,19 +129,22 @@ public:
             expectEquals (msg[2].getType(), OSCTypes::string);
             expectEquals (msg[3].getType(), OSCTypes::blob);
             expectEquals (msg[4].getType(), OSCTypes::colour);
-
+            expectEquals (msg[5].getType(), OSCTypes::boolean);
+            
             expect (msg[0].isInt32());
             expect (msg[1].isFloat32());
             expect (msg[2].isString());
             expect (msg[3].isBlob());
             expect (msg[4].isColour());
-
+            expect (msg[5].isBool());
+            
             expectEquals (msg[0].getInt32(), testInt);
             expectEquals (msg[1].getFloat32(), testFloat);
             expectEquals (msg[2].getString(), testString);
             expect (msg[3].getBlob() == testBlob);
             expect (msg[4].getColour().toInt32() == testColour.toInt32());
-
+            expectEquals (msg[5].getBool(), testBool);
+            
             expect (msg.begin() + numTestArgs == msg.end());
 
             auto arg = msg.begin();
@@ -158,6 +163,9 @@ public:
             expect (arg->isColour());
             expect (arg->getColour().toInt32() == testColour.toInt32());
             ++arg;
+            expect (arg->isBool());
+            expectEquals (arg->getBool(), testBool);
+            ++arg;
             expect (arg == msg.end());
         }
 
@@ -165,6 +173,7 @@ public:
         beginTest ("Initialisation with argument list (C++11 only)");
         {
             int testInt = 42;
+            bool testBool = true;
             float testFloat = 5.5;
             String testString = "Hello, World!";
 
@@ -174,6 +183,13 @@ public:
                 expectEquals (msg.size(), 1);
                 expect (msg[0].isInt32());
                 expectEquals (msg[0].getInt32(), testInt);
+            }
+            {
+                OSCMessage msg ("/test", testBool);
+                expect (msg.getAddressPattern().toString() == String ("/test"));
+                expectEquals (msg.size(), 1);
+                expect (msg[0].isBool());
+                expectEquals (msg[0].getBool(), testBool);
             }
             {
                 OSCMessage msg ("/test", testFloat);
@@ -192,18 +208,20 @@ public:
             {
                 OSCMessage msg ("/test", testInt, testFloat, testString, testFloat, testInt);
                 expect (msg.getAddressPattern().toString() == String ("/test"));
-                expectEquals (msg.size(), 5);
+                expectEquals (msg.size(), 6);
                 expect (msg[0].isInt32());
                 expect (msg[1].isFloat32());
                 expect (msg[2].isString());
                 expect (msg[3].isFloat32());
                 expect (msg[4].isInt32());
+                expect (msg[5].isBool());
 
                 expectEquals (msg[0].getInt32(), testInt);
                 expectEquals (msg[1].getFloat32(), testFloat);
                 expectEquals (msg[2].getString(), testString);
                 expectEquals (msg[3].getFloat32(), testFloat);
                 expectEquals (msg[4].getInt32(), testInt);
+                expectEquals (msg[5].getBool(), testBool);
             }
         }
     }

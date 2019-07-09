@@ -72,11 +72,6 @@ namespace
         bool isExhausted()                          { return input.isExhausted(); }
 
         //==============================================================================
-        bool readBoolean()
-        {
-            //checkBytesAvailable (4, "OSC input stream exhausted while reading int32");
-            return input.readBool();
-        }
         
         int32 readInt32()
         {
@@ -93,12 +88,6 @@ namespace
         float readFloat32()
         {
             checkBytesAvailable (4, "OSC input stream exhausted while reading float");
-            return input.readFloatBigEndian();
-        }
-
-        float readFloat32OSC()
-        {
-            //checkBytesAvailable (4, "OSC input stream exhausted while reading float");
             return input.readFloatBigEndian();
         }
         
@@ -193,13 +182,12 @@ namespace
             switch (type)
             {
                 case OSCTypes::int32:       return OSCArgument (readInt32());
-                case OSCTypes::float32:     return OSCArgument (readFloat32());
-                case OSCTypes::float32OSC:   return OSCArgument (readFloat32OSC());
                 case OSCTypes::string:      return OSCArgument (readString());
                 case OSCTypes::blob:        return OSCArgument (readBlob());
                 case OSCTypes::colour:      return OSCArgument (readColour());
-                case OSCTypes::boolean:     return OSCArgument (readBoolean());
-
+                case OSCTypes::truthy:      return OSCArgument (true);
+                case OSCTypes::falsey:      return OSCArgument (false);
+                ///LEFT OFF HERE - TRY MAKING THESE TYPES booleanTrue and booleanFalse
                 default:
                     // You supplied an invalid OSCType when calling readArgument! This should never happen.
                     jassertfalse;
@@ -496,7 +484,7 @@ private:
             int port;
             
             auto bytesRead = (size_t) socket->read (oscBuffer.getData(), bufferSize, false, address, port);
-
+            
             if (bytesRead >= 4)
                 handleBuffer (oscBuffer.getData(), address, bytesRead);
         }
@@ -791,7 +779,10 @@ public:
 
         {
             // test data:
+            int testBool = true;
             int testInt = -2015;
+            const bool testBoolRepresentation[] = { 0x1 };
+            
             const uint8 testIntRepresentation[] =  { 0xFF, 0xFF, 0xF8, 0x21 }; // big endian two's complement
 
             float testFloat = 345.6125f;
@@ -810,6 +801,15 @@ public:
 
             // read:
             {
+                {
+                    // bool:
+                    OSCInputStream inStream (testBoolRepresentation, sizeof (testBoolRepresentation));
+                    OSCArgument arg = inStream.readArgument (OSCTypes::bool);
+                    
+                    expect (inStream.getPosition() == 1);
+                    expect (arg.isBool());
+                    expectEquals (arg.getBool(), testBool);
+                }
                 {
                     // int32:
                     OSCInputStream inStream (testIntRepresentation, sizeof (testIntRepresentation));
@@ -1087,6 +1087,7 @@ public:
             // valid bundle (containing both messages and other bundles)
 
             {
+                bool testBool = true;
                 int32 testInt = -2015;
                 float testFloat = 345.6125f;
                 String testString = "Hello, World!";

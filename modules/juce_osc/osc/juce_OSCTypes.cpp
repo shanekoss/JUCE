@@ -29,12 +29,12 @@ namespace juce
 
 const OSCType OSCTypes::int32   = 'i';
 const OSCType OSCTypes::float32 = 'f';
-const OSCType OSCTypes::float32OSC = 'F';
 const OSCType OSCTypes::string  = 's';
 const OSCType OSCTypes::blob    = 'b';
 const OSCType OSCTypes::colour  = 'r';
-const OSCType OSCTypes::boolean  = 'T';
-
+const OSCType OSCTypes::truthy  = 'T';
+const OSCType OSCTypes::falsey = 'F';
+    
 uint32 OSCColour::toInt32() const
 {
     return ByteOrder::makeInt (alpha, blue, green, red);

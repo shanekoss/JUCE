@@ -49,6 +49,11 @@ namespace
         size_t getDataSize() const noexcept     { return output.getDataSize(); }
 
         //==============================================================================
+        bool writeBool (bool value)
+        {
+            return output.writeBool (value);
+        }
+        
         bool writeInt32 (int32 value)
         {
             return output.writeIntBigEndian (value);
@@ -129,7 +134,7 @@ namespace
                 case OSCTypes::string:      return writeString (arg.getString());
                 case OSCTypes::blob:        return writeBlob (arg.getBlob());
                 case OSCTypes::colour:      return writeColour (arg.getColour());
-
+    
                 default:
                     // In this very unlikely case you supplied an invalid OSCType!
                     jassertfalse;

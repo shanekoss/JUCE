@@ -70,7 +70,7 @@ public:
     OSCType getType() const noexcept        { return type; }
 
     /** Returns whether the type of the OSCArgument is bool. */
-    bool isBool() const noexcept           { return type == OSCTypes::boolean; }
+    bool isBool() const noexcept           { return type == OSCTypes::truthy || type == OSCTypes::falsey; }
     
     /** Returns whether the type of the OSCArgument is int32. */
     bool isInt32() const noexcept           { return type == OSCTypes::int32; }
@@ -125,11 +125,11 @@ private:
 
     union
     {
-        bool boolValue;
         int32 intValue;
         float floatValue;
     };
-
+    
+    bool boolValue;
     String stringValue;
     MemoryBlock blob;
 };
