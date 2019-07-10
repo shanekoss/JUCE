@@ -182,12 +182,13 @@ namespace
             switch (type)
             {
                 case OSCTypes::int32:       return OSCArgument (readInt32());
+                case OSCTypes::float32:     return OSCArgument (readFloat32());
                 case OSCTypes::string:      return OSCArgument (readString());
                 case OSCTypes::blob:        return OSCArgument (readBlob());
                 case OSCTypes::colour:      return OSCArgument (readColour());
                 case OSCTypes::truthy:      return OSCArgument (true);
                 case OSCTypes::falsey:      return OSCArgument (false);
-                ///LEFT OFF HERE - TRY MAKING THESE TYPES booleanTrue and booleanFalse
+
                 default:
                     // You supplied an invalid OSCType when calling readArgument! This should never happen.
                     jassertfalse;
