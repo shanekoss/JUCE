@@ -434,7 +434,7 @@ struct OSCReceiver::Pimpl   : private Thread,
                 content.getMessage().addString(address);
             }
             if(content.isBundle()){
-                for(OSCBundle::Element& element : content.getBundle()){
+                for(const OSCBundle::Element& element : content.getBundle()){
                     element.getMessage().addString(address);
                 }
             }
