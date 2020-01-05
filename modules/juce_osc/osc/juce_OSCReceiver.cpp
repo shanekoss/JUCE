@@ -324,7 +324,7 @@ struct OSCReceiver::Pimpl   : private Thread,
     {
     }
 
-    ~Pimpl()
+    ~Pimpl() override
     {
         disconnect();
     }
@@ -540,34 +540,33 @@ private:
     //==============================================================================
     void callListeners (const OSCBundle::Element& content)
     {
-        using Listener = OSCReceiver::Listener<OSCReceiver::MessageLoopCallback>;
+        using OSCListener = OSCReceiver::Listener<OSCReceiver::MessageLoopCallback>;
 
         if (content.isMessage())
         {
             auto&& message = content.getMessage();
-            listeners.call ([&] (Listener& l) { l.oscMessageReceived (message); });
+            listeners.call ([&] (OSCListener& l) { l.oscMessageReceived (message); });
         }
         else if (content.isBundle())
         {
             auto&& bundle = content.getBundle();
-            
-            listeners.call ([&] (Listener& l) { l.oscBundleReceived (bundle); });
+            listeners.call ([&] (OSCListener& l) { l.oscBundleReceived (bundle); });
         }
     }
 
     void callRealtimeListeners (const OSCBundle::Element& content)
     {
-        using Listener = OSCReceiver::Listener<OSCReceiver::RealtimeCallback>;
+        using OSCListener = OSCReceiver::Listener<OSCReceiver::RealtimeCallback>;
 
         if (content.isMessage())
         {
             auto&& message = content.getMessage();
-            realtimeListeners.call ([&] (Listener& l) { l.oscMessageReceived (message); });
+            realtimeListeners.call ([&] (OSCListener& l) { l.oscMessageReceived (message); });
         }
         else if (content.isBundle())
         {
             auto&& bundle = content.getBundle();
-            realtimeListeners.call ([&] (Listener& l) { l.oscBundleReceived (bundle); });
+            realtimeListeners.call ([&] (OSCListener& l) { l.oscBundleReceived (bundle); });
         }
     }
 
@@ -683,7 +682,9 @@ void OSCReceiver::registerFormatErrorHandler (FormatErrorHandler handler)
 class OSCInputStreamTests  : public UnitTest
 {
 public:
-    OSCInputStreamTests() : UnitTest ("OSCInputStream class", "OSC") {}
+    OSCInputStreamTests()
+        : UnitTest ("OSCInputStream class", UnitTestCategories::osc)
+    {}
 
     void runTest()
     {
@@ -1216,6 +1217,6 @@ public:
 
 static OSCInputStreamTests OSCInputStreamUnitTests;
 
-#endif // JUCE_UNIT_TESTS
+#endif
 
 } // namespace juce

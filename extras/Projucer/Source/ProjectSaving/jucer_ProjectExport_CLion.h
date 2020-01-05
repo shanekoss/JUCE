@@ -57,10 +57,10 @@ public:
     static const char* getName()                { return "CLion (beta)"; }
     static const char* getValueTreeTypeName()   { return "CLION"; }
 
-    static CLionProjectExporter* createForSettings (Project& project, const ValueTree& settings)
+    static CLionProjectExporter* createForSettings (Project& projectToUse, const ValueTree& settingsToUse)
     {
-        if (settings.hasType (getValueTreeTypeName()))
-            return new CLionProjectExporter (project, settings);
+        if (settingsToUse.hasType (getValueTreeTypeName()))
+            return new CLionProjectExporter (projectToUse, settingsToUse);
 
         return nullptr;
     }
@@ -311,7 +311,8 @@ private:
             for (int i = 0; i < projectItem.getNumChildren(); ++i)
                 getFileInfoList (target, exporter, projectItem.getChild(i), fileInfoList);
         }
-        else if (projectItem.shouldBeAddedToTargetProject() && getProject().getTargetTypeFromFilePath (projectItem.getFile(), true) == targetType )
+        else if (projectItem.shouldBeAddedToTargetProject() && projectItem.shouldBeAddedToTargetExporter (*this)
+                 && getProject().getTargetTypeFromFilePath (projectItem.getFile(), true) == targetType )
         {
             auto path = RelativePath (projectItem.getFile(), exporter.getTargetFolder(), RelativePath::buildTargetFolder).toUnixStyle();
 
@@ -1013,10 +1014,8 @@ private:
                 if (targetAttributeKeys.contains ("INFOPLIST_FILE"))
                 {
                     auto plistFile = exporter.getTargetFolder().getChildFile (targetAttributes["INFOPLIST_FILE"]);
-                    XmlDocument infoPlistData (plistFile);
-                    std::unique_ptr<XmlElement> plist (infoPlistData.getDocumentElement());
 
-                    if (plist != nullptr)
+                    if (auto plist = parseXML (plistFile))
                     {
                         if (auto* dict = plist->getChildByName ("dict"))
                         {
@@ -1039,7 +1038,11 @@ private:
                         }
 
                         auto updatedPlist = getTargetFolder().getChildFile (config.getName() + "-" + plistFile.getFileName());
-                        plist->writeToFile (updatedPlist, "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">");
+
+                        XmlElement::TextFormat format;
+                        format.dtd = "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">";
+                        plist->writeTo (updatedPlist, format);
+
                         targetAttributes.set ("INFOPLIST_FILE", ("${CMAKE_CURRENT_SOURCE_DIR}/" + updatedPlist.getFileName()).quoted());
                     }
                     else
