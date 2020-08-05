@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -25,6 +25,8 @@
 */
 
 #pragma once
+
+#include "../Utility/Helpers/jucer_VersionInfo.h"
 
 class DownloadAndInstallThread;
 
@@ -43,17 +45,12 @@ public:
 private:
     //==============================================================================
     void run() override;
-    void queryUpdateServer();
-    void processResult();
-    void askUserAboutNewVersion (const String&, const String&);
-    void askUserForLocationToDownload();
-    void downloadAndInstall (const File&);
+    void askUserAboutNewVersion (const String&, const String&, const VersionInfo::Asset&);
+    void askUserForLocationToDownload (const VersionInfo::Asset&);
+    void downloadAndInstall (const VersionInfo::Asset&, const File&);
 
     //==============================================================================
     bool showAlertWindows = false;
-    int statusCode = 0;
-    String relativeDownloadPath;
-    var jsonReply;
 
     std::unique_ptr<DownloadAndInstallThread> installer;
     std::unique_ptr<Component> dialogWindow;

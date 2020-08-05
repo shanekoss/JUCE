@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -63,7 +63,7 @@ public:
     ~AudioParameterChoice() override;
 
     /** Returns the current index of the selected item. */
-    int getIndex() const noexcept                   { return roundToInt (value); }
+    int getIndex() const noexcept                   { return roundToInt (value.load()); }
 
     /** Returns the current index of the selected item. */
     operator int() const noexcept                   { return getIndex(); }
@@ -100,7 +100,7 @@ private:
     float getValueForText (const String&) const override;
 
     const NormalisableRange<float> range;
-    float value;
+    std::atomic<float> value;
     const float defaultValue;
     std::function<String(int, int)> stringFromIndexFunction;
     std::function<int(const String&)> indexFromStringFunction;

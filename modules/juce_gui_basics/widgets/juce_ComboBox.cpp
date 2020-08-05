@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -83,7 +83,7 @@ void ComboBox::addItem (const String& newItemText, int newItemId)
     // you can't add empty strings to the list..
     jassert (newItemText.isNotEmpty());
 
-    // IDs must be non-zero, as zero is used to indicate a lack of selecion.
+    // IDs must be non-zero, as zero is used to indicate a lack of selection.
     jassert (newItemId != 0);
 
     // you shouldn't use duplicate item IDs!
@@ -489,6 +489,8 @@ void ComboBox::showPopupIfNotActive()
         // showPopup asynchronously, we are giving the other popups a chance to properly
         // close themselves
         MessageManager::callAsync ([safePointer]() mutable { if (safePointer != nullptr) safePointer->showPopup(); });
+
+        repaint();
     }
 }
 

@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -124,8 +124,8 @@ public:
         return parameter.getText (normalise (value), 0);
     }
 
-    float getDenormalisedValue() const   { return unnormalisedValue; }
-    float& getRawDenormalisedValue()     { return unnormalisedValue; }
+    float getDenormalisedValue() const                { return unnormalisedValue; }
+    std::atomic<float>& getRawDenormalisedValue()     { return unnormalisedValue; }
 
     bool flushToTree (const Identifier& key, UndoManager* um)
     {
@@ -139,12 +139,12 @@ public:
             if ((float) *valueProperty != unnormalisedValue)
             {
                 ScopedValueSetter<bool> svs (ignoreParameterChangedCallbacks, true);
-                tree.setProperty (key, unnormalisedValue, um);
+                tree.setProperty (key, unnormalisedValue.load(), um);
             }
         }
         else
         {
-            tree.setProperty (key, unnormalisedValue, nullptr);
+            tree.setProperty (key, unnormalisedValue.load(), nullptr);
         }
 
         return true;
@@ -186,11 +186,38 @@ private:
         parameter.setValueNotifyingHost (value);
     }
 
+    class LockedListeners
+    {
+    public:
+        template <typename Fn>
+        void call (Fn&& fn)
+        {
+            const CriticalSection::ScopedLockType lock (mutex);
+            listeners.call (std::forward<Fn> (fn));
+        }
+
+        void add (Listener* l)
+        {
+            const CriticalSection::ScopedLockType lock (mutex);
+            listeners.add (l);
+        }
+
+        void remove (Listener* l)
+        {
+            const CriticalSection::ScopedLockType lock (mutex);
+            listeners.remove (l);
+        }
+
+    private:
+        CriticalSection mutex;
+        ListenerList<Listener> listeners;
+    };
+
     RangedAudioParameter& parameter;
-    ListenerList<Listener> listeners;
-    float unnormalisedValue{};
-    std::atomic<bool> needsUpdate { true };
-    bool listenersNeedCalling { true }, ignoreParameterChangedCallbacks { false };
+    LockedListeners listeners;
+    std::atomic<float> unnormalisedValue { 0.0f };
+    std::atomic<bool> needsUpdate { true }, listenersNeedCalling { true };
+    bool ignoreParameterChangedCallbacks { false };
 };
 
 //==============================================================================
@@ -258,7 +285,10 @@ AudioProcessorValueTreeState::AudioProcessorValueTreeState (AudioProcessor& p, U
     state.addListener (this);
 }
 
-AudioProcessorValueTreeState::~AudioProcessorValueTreeState() {}
+AudioProcessorValueTreeState::~AudioProcessorValueTreeState()
+{
+    stopTimer();
+}
 
 //==============================================================================
 RangedAudioParameter* AudioProcessorValueTreeState::createAndAddParameter (const String& paramID,
@@ -355,7 +385,7 @@ RangedAudioParameter* AudioProcessorValueTreeState::getParameter (StringRef para
     return nullptr;
 }
 
-float* AudioProcessorValueTreeState::getRawParameterValue (StringRef paramID) const noexcept
+std::atomic<float>* AudioProcessorValueTreeState::getRawParameterValue (StringRef paramID) const noexcept
 {
     if (auto* p = getParameterAdapter (paramID))
         return &p->getRawDenormalisedValue();
@@ -528,7 +558,7 @@ struct AttachedControlBase  : public AudioProcessorValueTreeState::Listener,
 
     AudioProcessorValueTreeState& state;
     String paramID;
-    float lastValue;
+    std::atomic<float> lastValue;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AttachedControlBase)
 };
@@ -791,7 +821,7 @@ struct ParameterAdapterTests  : public UnitTest
                 adapter.setDenormalisedValue (value);
 
                 expectEquals (adapter.getDenormalisedValue(), value);
-                expectEquals (adapter.getRawDenormalisedValue(), value);
+                expectEquals (adapter.getRawDenormalisedValue().load(), value);
             };
 
             test ({ -20, -10 }, -15);
@@ -1044,7 +1074,7 @@ public:
             const auto value = 0.5f;
             param->setValueNotifyingHost (value);
 
-            expectEquals (*proc.state.getRawParameterValue (key), value);
+            expectEquals (proc.state.getRawParameterValue (key)->load(), value);
         }
 
         beginTest ("After adding an APVTS::Parameter, its value is the default value");
@@ -1062,7 +1092,7 @@ public:
                 nullptr,
                 nullptr));
 
-            expectEquals (*proc.state.getRawParameterValue (key), value);
+            expectEquals (proc.state.getRawParameterValue (key)->load(), value);
         }
 
         beginTest ("Listeners receive notifications when parameters change");
@@ -1138,7 +1168,7 @@ public:
             value = newValue;
 
             expectEquals (param->getValue(), newValue);
-            expectEquals (*proc.state.getRawParameterValue (key), newValue);
+            expectEquals (proc.state.getRawParameterValue (key)->load(), newValue);
         }
 
         beginTest ("When the parameter value is changed, custom parameter values are updated");
@@ -1154,7 +1184,7 @@ public:
             value = newValue;
 
             expectEquals (paramPtr->getCurrentChoiceName(), choices[int (newValue)]);
-            expectEquals (*proc.state.getRawParameterValue (key), newValue);
+            expectEquals (proc.state.getRawParameterValue (key)->load(), newValue);
         }
 
         beginTest ("When the parameter value is changed, listeners are notified");

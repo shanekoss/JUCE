@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -24,7 +24,7 @@
   ==============================================================================
 */
 
-#include "../../juce_core/system/juce_TargetPlatform.h"
+#include <juce_core/system/juce_TargetPlatform.h>
 #include "../utility/juce_CheckSettingMacros.h"
 
 #if JucePlugin_Build_AUv3
@@ -62,10 +62,10 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
 
-#include "../../juce_graphics/native/juce_mac_CoreGraphicsHelpers.h"
-#include "../../juce_audio_basics/native/juce_mac_CoreAudioLayouts.h"
-#include "../../juce_audio_processors/format_types/juce_LegacyAudioParameter.cpp"
-#include "../../juce_audio_processors/format_types/juce_AU_Shared.h"
+#include <juce_graphics/native/juce_mac_CoreGraphicsHelpers.h>
+#include <juce_audio_basics/native/juce_mac_CoreAudioLayouts.h>
+#include <juce_audio_processors/format_types/juce_LegacyAudioParameter.cpp>
+#include <juce_audio_processors/format_types/juce_AU_Shared.h>
 
 #define JUCE_VIEWCONTROLLER_OBJC_NAME(x) JUCE_JOIN_MACRO (x, FactoryAUv3)
 
@@ -566,7 +566,12 @@ public:
         }
 
         juce::MemoryBlock state;
+
+       #if JUCE_AU_WRAPPERS_SAVE_PROGRAM_STATES
         getAudioProcessor().getCurrentProgramStateInformation (state);
+       #else
+        getAudioProcessor().getStateInformation (state);
+       #endif
 
         if (state.getSize() > 0)
         {
@@ -612,7 +617,13 @@ public:
                 const juce::uint8* const rawBytes = reinterpret_cast< const juce::uint8* const> ([data bytes]);
 
                 if (numBytes > 0)
+                {
+                   #if JUCE_AU_WRAPPERS_SAVE_PROGRAM_STATES
                     getAudioProcessor().setCurrentProgramStateInformation (rawBytes, numBytes);
+                   #else
+                    getAudioProcessor().setStateInformation (rawBytes, numBytes);
+                   #endif
+                }
             }
         }
 
@@ -959,16 +970,19 @@ public:
 
         switch (lastTimeStamp.mSMPTETime.mType)
         {
-            case kSMPTETimeType2398:        info.frameRate = AudioPlayHead::fps23976; break;
-            case kSMPTETimeType24:          info.frameRate = AudioPlayHead::fps24; break;
-            case kSMPTETimeType25:          info.frameRate = AudioPlayHead::fps25; break;
-            case kSMPTETimeType2997:        info.frameRate = AudioPlayHead::fps2997; break;
+            case kSMPTETimeType2398:        info.frameRate = AudioPlayHead::fps23976;    break;
+            case kSMPTETimeType24:          info.frameRate = AudioPlayHead::fps24;       break;
+            case kSMPTETimeType25:          info.frameRate = AudioPlayHead::fps25;       break;
+            case kSMPTETimeType2997:        info.frameRate = AudioPlayHead::fps2997;     break;
             case kSMPTETimeType2997Drop:    info.frameRate = AudioPlayHead::fps2997drop; break;
-            case kSMPTETimeType30Drop:      info.frameRate = AudioPlayHead::fps30drop; break;
-            case kSMPTETimeType30:          info.frameRate = AudioPlayHead::fps30; break;
-            case kSMPTETimeType60Drop:      info.frameRate = AudioPlayHead::fps60drop; break;
-            case kSMPTETimeType60:          info.frameRate = AudioPlayHead::fps60; break;
-            default:                        info.frameRate = AudioPlayHead::fpsUnknown; break;
+            case kSMPTETimeType30Drop:      info.frameRate = AudioPlayHead::fps30drop;   break;
+            case kSMPTETimeType30:          info.frameRate = AudioPlayHead::fps30;       break;
+            case kSMPTETimeType60Drop:      info.frameRate = AudioPlayHead::fps60drop;   break;
+            case kSMPTETimeType60:          info.frameRate = AudioPlayHead::fps60;       break;
+            case kSMPTETimeType5994:
+            case kSMPTETimeType5994Drop:
+            case kSMPTETimeType50:
+            default:                        info.frameRate = AudioPlayHead::fpsUnknown;  break;
         }
 
         double num;
@@ -1116,7 +1130,7 @@ private:
         AudioBufferList* bufferList = nullptr;
         int maxFrames, numberOfChannels;
         bool isInterleaved;
-        AudioBuffer<float> scratchBuffer;
+        juce::AudioBuffer<float> scratchBuffer;
     };
 
     //==============================================================================
@@ -1167,8 +1181,9 @@ private:
                                                   | kAudioUnitParameterFlag_HasCFNameString
                                                   | kAudioUnitParameterFlag_ValuesHaveStrings);
 
-        if (! forceLegacyParamIDs)
-            flags |= (UInt32) kAudioUnitParameterFlag_IsHighResolution;
+       #if ! JUCE_FORCE_LEGACY_PARAMETER_AUTOMATION_TYPE
+        flags |= (UInt32) kAudioUnitParameterFlag_IsHighResolution;
+       #endif
 
         // Set whether the param is automatable (unnamed parameters aren't allowed to be automated).
         if (name.isEmpty() || ! parameter->isAutomatable())
@@ -1193,24 +1208,23 @@ private:
         }
         else
         {
-            if (! forceLegacyParamIDs)
+           #if ! JUCE_FORCE_LEGACY_PARAMETER_AUTOMATION_TYPE
+            if (parameter->isDiscrete())
             {
-                if (parameter->isDiscrete())
-                {
-                    unit = parameter->isBoolean() ? kAudioUnitParameterUnit_Boolean : kAudioUnitParameterUnit_Indexed;
-                    auto maxValue = getMaximumParameterValue (parameter);
-                    auto numSteps = parameter->getNumSteps();
+                unit = parameter->isBoolean() ? kAudioUnitParameterUnit_Boolean : kAudioUnitParameterUnit_Indexed;
+                auto maxValue = getMaximumParameterValue (parameter);
+                auto numSteps = parameter->getNumSteps();
 
-                    // Some hosts can't handle the huge numbers of discrete parameter values created when
-                    // using the default number of steps.
-                    jassert (numSteps != AudioProcessor::getDefaultNumParameterSteps());
+                // Some hosts can't handle the huge numbers of discrete parameter values created when
+                // using the default number of steps.
+                jassert (numSteps != AudioProcessor::getDefaultNumParameterSteps());
 
-                    valueStrings.reset ([NSMutableArray new]);
+                valueStrings.reset ([NSMutableArray new]);
 
-                    for (int i = 0; i < numSteps; ++i)
-                        [valueStrings.get() addObject: juceStringToNS (parameter->getText ((float) i / maxValue, 0))];
-                }
+                for (int i = 0; i < numSteps; ++i)
+                    [valueStrings.get() addObject: juceStringToNS (parameter->getText ((float) i / maxValue, 0))];
             }
+           #endif
         }
 
         AUParameterAddress address = generateAUParameterAddress (parameter);
@@ -1416,6 +1430,7 @@ private:
                 }
                 break;
 
+                case AURenderEventMIDISysEx:
                 default:
                     break;
             }
@@ -1542,7 +1557,7 @@ private:
         return noErr;
     }
 
-    void processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiBuffer) noexcept
+    void processBlock (juce::AudioBuffer<float>& buffer, MidiBuffer& midiBuffer) noexcept
     {
         auto& processor = getAudioProcessor();
         const ScopedLock sl (processor.getCallbackLock());

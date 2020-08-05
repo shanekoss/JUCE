@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -122,6 +122,13 @@ public:
             case ProjectType::Target::VSTPlugIn:
             case ProjectType::Target::DynamicLibrary:
                 return true;
+            case ProjectType::Target::AAXPlugIn:
+            case ProjectType::Target::RTASPlugIn:
+            case ProjectType::Target::UnityPlugIn:
+            case ProjectType::Target::VST3PlugIn:
+            case ProjectType::Target::AudioUnitPlugIn:
+            case ProjectType::Target::AudioUnitv3PlugIn:
+            case ProjectType::Target::unspecified:
             default:
                 break;
         }
@@ -167,13 +174,8 @@ public:
                                         if (targetType == ProjectType::Target::SharedCodeTarget)
                                             return;
 
-                                        if (auto* target = new CodeBlocksTarget (*this, targetType))
-                                        {
-                                            if (targetType == ProjectType::Target::AggregateTarget)
-                                                targets.insert (0, target);
-                                            else
-                                                targets.add (target);
-                                        }
+                                        targets.insert (targetType == ProjectType::Target::AggregateTarget ? 0 : -1,
+                                                        new CodeBlocksTarget (*this, targetType));
                                     });
 
         // If you hit this assert, you tried to generate a project for an exporter
@@ -274,6 +276,8 @@ private:
                     case staticLibrary:         return ".lib";
                     case sharedLibraryOrDLL:
                     case pluginBundle:          return ".dll";
+                    case macOSAppex:
+                    case unknown:
                     default:
                         break;
                 }
@@ -284,17 +288,10 @@ private:
                 {
                     case executable:            return {};
                     case staticLibrary:         return ".a";
-                    case sharedLibraryOrDLL:    return ".so";
-
                     case pluginBundle:
-                        switch (type)
-                        {
-                            case VSTPlugIn:     return ".so";
-                            default:            break;
-                        }
-
-                        return ".so";
-
+                    case sharedLibraryOrDLL:    return ".so";
+                    case macOSAppex:
+                    case unknown:
                     default:
                         break;
                 }
@@ -432,7 +429,7 @@ private:
 
         if (config.exporter.isLinux())
         {
-            if (target.isDynamicLibrary() || getProject().getProjectType().isAudioPlugin())
+            if (target.isDynamicLibrary() || getProject().isAudioPluginProject())
                 flags.add ("-fPIC");
 
             auto packages = getPackages();
@@ -495,7 +492,7 @@ private:
     {
         auto librarySearchPaths = config.getLibrarySearchPaths();
 
-        if (getProject().getProjectType().isAudioPlugin() && target.type != ProjectType::Target::SharedCodeTarget)
+        if (getProject().isAudioPluginProject() && target.type != ProjectType::Target::SharedCodeTarget)
             librarySearchPaths.add (RelativePath (getSharedCodePath (config), RelativePath::buildTargetFolder).getParentDirectory().toUnixStyle().quoted());
 
         return librarySearchPaths;
@@ -523,22 +520,10 @@ private:
 
     static int getTypeIndex (const ProjectType::Target::Type& type)
     {
-        switch (type)
-        {
-            case ProjectType::Target::GUIApp:
-            case ProjectType::Target::StandalonePlugIn:
-                return 0;
-            case ProjectType::Target::ConsoleApp:
-                return 1;
-            case ProjectType::Target::StaticLibrary:
-            case ProjectType::Target::SharedCodeTarget:
-                return 2;
-            case ProjectType::Target::DynamicLibrary:
-            case ProjectType::Target::VSTPlugIn:
-                return 3;
-            default:
-                break;
-        }
+        if (type == ProjectType::Target::GUIApp || type == ProjectType::Target::StandalonePlugIn)         return 0;
+        if (type == ProjectType::Target::ConsoleApp)                                                      return 1;
+        if (type == ProjectType::Target::StaticLibrary || type == ProjectType::Target::SharedCodeTarget)  return 2;
+        if (type == ProjectType::Target::DynamicLibrary || type == ProjectType::Target::VSTPlugIn)        return 3;
 
         return 0;
     }
@@ -601,7 +586,7 @@ private:
         xml.createNewChildElement ("Option")->setAttribute ("type", getTypeIndex (target.type));
         xml.createNewChildElement ("Option")->setAttribute ("compiler", "gcc");
 
-        if (getProject().getProjectType().isAudioPlugin() && target.type != ProjectType::Target::SharedCodeTarget)
+        if (getProject().isAudioPluginProject() && target.type != ProjectType::Target::SharedCodeTarget)
             xml.createNewChildElement ("Option")->setAttribute ("external_deps", getSharedCodePath (config));
 
         {
@@ -635,7 +620,7 @@ private:
         {
             auto* linker = xml.createNewChildElement ("Linker");
 
-            if (getProject().getProjectType().isAudioPlugin() && target.type != ProjectType::Target::SharedCodeTarget)
+            if (getProject().isAudioPluginProject() && target.type != ProjectType::Target::SharedCodeTarget)
                 setAddOption (*linker, "option", getSharedCodePath (config).quoted());
 
             for (auto& flag : getLinkerFlags (config, target))
@@ -747,7 +732,7 @@ private:
     // the single target
     CodeBlocksTarget& getMainTarget() const
     {
-        if (getProject().getProjectType().isAudioPlugin())
+        if (getProject().isAudioPluginProject())
             return getTargetWithType (ProjectType::Target::SharedCodeTarget);
 
         for (auto* target : targets)
@@ -761,7 +746,7 @@ private:
 
     CodeBlocksTarget& getTargetForProjectItem (const Project::Item& projectItem) const
     {
-        if (getProject().getProjectType().isAudioPlugin())
+        if (getProject().isAudioPluginProject())
         {
             if (! projectItem.shouldBeCompiled())
                 return getTargetWithType (ProjectType::Target::SharedCodeTarget);

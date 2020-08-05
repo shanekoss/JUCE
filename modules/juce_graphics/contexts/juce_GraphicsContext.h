@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -492,7 +492,7 @@ public:
     /** Draws part of an image, rescaling it to fit in a given target region.
 
         The specified area of the source image is rescaled and drawn to fill the
-        specifed destination rectangle.
+        specified destination rectangle.
 
         Images are composited using the context's current opacity, so if you
         don't want it to be drawn semi-transparently, be sure to call setOpacity (1.0f)

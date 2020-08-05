@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -24,6 +24,7 @@
   ==============================================================================
 */
 
+
 /*******************************************************************************
  The block below describes the properties of this module, and is read by
  the Projucer to automatically generate project code that uses it.
@@ -33,17 +34,17 @@
 
  BEGIN_JUCE_MODULE_DECLARATION
 
-  ID:               juce_audio_processors
-  vendor:           juce
-  version:          5.4.5
-  name:             JUCE audio processor classes
-  description:      Classes for loading and playing VST, AU, LADSPA, or internally-generated audio processors.
-  website:          http://www.juce.com/juce
-  license:          GPL/Commercial
+  ID:                 juce_audio_processors
+  vendor:             juce
+  version:            5.4.7
+  name:               JUCE audio processor classes
+  description:        Classes for loading and playing VST, AU, LADSPA, or internally-generated audio processors.
+  website:            http://www.juce.com/juce
+  license:            GPL/Commercial
 
-  dependencies:     juce_gui_extra, juce_audio_basics
-  OSXFrameworks:    CoreAudio CoreMIDI AudioToolbox
-  iOSFrameworks:    AudioToolbox
+  dependencies:       juce_gui_extra, juce_audio_basics
+  OSXFrameworks:      CoreAudio CoreMIDI AudioToolbox
+  iOSFrameworks:      AudioToolbox
 
  END_JUCE_MODULE_DECLARATION
 

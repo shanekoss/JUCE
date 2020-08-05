@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -24,7 +24,7 @@
   ==============================================================================
 */
 
-#include "../JuceLibraryCode/JuceHeader.h"
+#include <JuceHeader.h>
 #include "InternalPlugins.h"
 #include "PluginGraph.h"
 
@@ -357,6 +357,11 @@ InternalPluginFormat::InternalPluginFormat()
         AudioProcessorGraph::AudioGraphIOProcessor p (AudioProcessorGraph::AudioGraphIOProcessor::midiInputNode);
         p.fillInPluginDescription (midiInDesc);
     }
+
+    {
+        AudioProcessorGraph::AudioGraphIOProcessor p (AudioProcessorGraph::AudioGraphIOProcessor::midiOutputNode);
+        p.fillInPluginDescription (midiOutDesc);
+    }
 }
 
 std::unique_ptr<AudioPluginInstance> InternalPluginFormat::createInstance (const String& name)
@@ -364,6 +369,7 @@ std::unique_ptr<AudioPluginInstance> InternalPluginFormat::createInstance (const
     if (name == audioOutDesc.name) return std::make_unique<AudioProcessorGraph::AudioGraphIOProcessor> (AudioProcessorGraph::AudioGraphIOProcessor::audioOutputNode);
     if (name == audioInDesc.name)  return std::make_unique<AudioProcessorGraph::AudioGraphIOProcessor> (AudioProcessorGraph::AudioGraphIOProcessor::audioInputNode);
     if (name == midiInDesc.name)   return std::make_unique<AudioProcessorGraph::AudioGraphIOProcessor> (AudioProcessorGraph::AudioGraphIOProcessor::midiInputNode);
+    if (name == midiOutDesc.name)  return std::make_unique<AudioProcessorGraph::AudioGraphIOProcessor> (AudioProcessorGraph::AudioGraphIOProcessor::midiOutputNode);
 
     if (name == SineWaveSynth::getIdentifier()) return std::make_unique<SineWaveSynth> (SineWaveSynth::getPluginDescription());
     if (name == ReverbPlugin::getIdentifier())  return std::make_unique<ReverbPlugin>  (ReverbPlugin::getPluginDescription());
@@ -388,7 +394,6 @@ bool InternalPluginFormat::requiresUnblockedMessageThreadDuringCreation (const P
 
 void InternalPluginFormat::getAllTypes (Array<PluginDescription>& results)
 {
-    results.add (audioInDesc, audioOutDesc, midiInDesc,
-                 SineWaveSynth::getPluginDescription(),
-                 ReverbPlugin::getPluginDescription());
+    results.add (audioInDesc, audioOutDesc, midiInDesc, midiOutDesc,
+                 SineWaveSynth::getPluginDescription(), ReverbPlugin::getPluginDescription());
 }

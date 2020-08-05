@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -24,7 +24,7 @@
   ==============================================================================
 */
 
-#include "../../juce_core/system/juce_TargetPlatform.h"
+#include <juce_core/system/juce_TargetPlatform.h>
 #include "../utility/juce_CheckSettingMacros.h"
 
 #if JucePlugin_Build_AAX && (JUCE_INCLUDED_AAX_IN_MM || defined (_WIN32) || defined (_WIN64))
@@ -34,7 +34,7 @@
 #include "../utility/juce_WindowsHooks.h"
 #include "../utility/juce_FakeMouseMoveGenerator.h"
 
-#include "../../juce_audio_processors/format_types/juce_LegacyAudioParameter.cpp"
+#include <juce_audio_processors/format_types/juce_LegacyAudioParameter.cpp>
 
 #ifdef __clang__
  #pragma clang diagnostic push
@@ -325,6 +325,12 @@ namespace AAXClasses
                 case AAX_eStemFormat_Ambi_1_ACN: return AudioChannelSet::ambisonic (1);
                 case AAX_eStemFormat_Ambi_2_ACN: return AudioChannelSet::ambisonic (2);
                 case AAX_eStemFormat_Ambi_3_ACN: return AudioChannelSet::ambisonic (3);
+                case AAX_eStemFormat_Reserved_1:
+                case AAX_eStemFormat_Reserved_2:
+                case AAX_eStemFormat_Reserved_3:
+                case AAX_eStemFormatNum:
+                case AAX_eStemFormat_Any:
+                case AAX_eStemFormat_INT32_MAX:
                 default:                         return AudioChannelSet::disabled();
             }
         }
@@ -341,6 +347,10 @@ namespace AAXClasses
             case AudioProcessorParameter::compressorLimiterGainReductionMeter:  return AAX_eMeterType_CLGain;
             case AudioProcessorParameter::expanderGateGainReductionMeter:       return AAX_eMeterType_EGGain;
             case AudioProcessorParameter::analysisMeter:                        return AAX_eMeterType_Analysis;
+            case AudioProcessorParameter::genericParameter:
+            case AudioProcessorParameter::inputGain:
+            case AudioProcessorParameter::outputGain:
+            case AudioProcessorParameter::otherMeter:
             default:                                                            return AAX_eMeterType_Other;
         }
     }
@@ -353,6 +363,7 @@ namespace AAXClasses
             case AAX_eHighlightColor_Blue:      return Colours::blue;
             case AAX_eHighlightColor_Green:     return Colours::green;
             case AAX_eHighlightColor_Yellow:    return Colours::yellow;
+            case AAX_eHighlightColor_Num:
             default:                            jassertfalse; break;
         }
 
@@ -509,8 +520,9 @@ namespace AAXClasses
         {
             if (component != nullptr)
             {
-                viewSize->horz = (float) component->getWidth();
-                viewSize->vert = (float) component->getHeight();
+                *viewSize = convertToHostBounds ({ (float) component->getHeight(),
+                                                   (float) component->getWidth() });
+
                 return AAX_SUCCESS;
             }
 
@@ -564,6 +576,18 @@ namespace AAXClasses
         //==============================================================================
         int getParamIndexFromID (AAX_CParamID paramID) const noexcept;
         AAX_CParamID getAAXParamIDFromJuceIndex (int index) const noexcept;
+
+        //==============================================================================
+        static AAX_Point convertToHostBounds (AAX_Point pluginSize)
+        {
+            auto desktopScale = Desktop::getInstance().getGlobalScaleFactor();
+
+            if (approximatelyEqual (desktopScale, 1.0f))
+                return pluginSize;
+
+            return { pluginSize.vert * desktopScale,
+                     pluginSize.horz * desktopScale };
+        }
 
         //==============================================================================
         struct ContentWrapperComponent  : public Component
@@ -623,26 +647,39 @@ namespace AAXClasses
             void mouseUp   (const MouseEvent& e) override  { callMouseMethod (e, &AAX_IViewContainer::HandleParameterMouseUp); }
             void mouseDrag (const MouseEvent& e) override  { callMouseMethod (e, &AAX_IViewContainer::HandleParameterMouseDrag); }
 
+            void parentSizeChanged() override
+            {
+                resizeHostWindow();
+
+                if (pluginEditor != nullptr)
+                    pluginEditor->repaint();
+            }
+
             void childBoundsChanged (Component*) override
+            {
+                if (resizeHostWindow())
+                {
+                    setSize (pluginEditor->getWidth(), pluginEditor->getHeight());
+                    lastValidSize = getBounds();
+                }
+                else
+                {
+                    pluginEditor->setBoundsConstrained (pluginEditor->getBounds().withSize (lastValidSize.getWidth(),
+                                                                                            lastValidSize.getHeight()));
+                }
+            }
+
+            bool resizeHostWindow()
             {
                 if (pluginEditor != nullptr)
                 {
-                    auto w = pluginEditor->getWidth();
-                    auto h = pluginEditor->getHeight();
+                    auto newSize = convertToHostBounds ({ (float) pluginEditor->getHeight(),
+                                                          (float) pluginEditor->getWidth() });
 
-                    AAX_Point newSize ((float) h, (float) w);
-
-                    if (owner.GetViewContainer()->SetViewSize (newSize) == AAX_SUCCESS)
-                    {
-                        setSize (w, h);
-                        lastValidSize = getBounds();
-                    }
-                    else
-                    {
-                        auto validSize = pluginEditor->getBounds().withSize (lastValidSize.getWidth(), lastValidSize.getHeight());
-                        pluginEditor->setBoundsConstrained (validSize);
-                    }
+                    return owner.GetViewContainer()->SetViewSize (newSize) == AAX_SUCCESS;
                 }
+
+                return false;
             }
 
             std::unique_ptr<AudioProcessorEditor> pluginEditor;
@@ -1004,7 +1041,12 @@ namespace AAXClasses
             info.timeInSeconds = info.timeInSamples / sampleRate;
 
             int64_t ticks = 0;
-            check (transport.GetCurrentTickPosition (&ticks));
+
+            if (info.isPlaying)
+                check (transport.GetCustomTickPosition (&ticks, info.timeInSamples));
+            else
+                check (transport.GetCurrentTickPosition (&ticks));
+
             info.ppqPosition = ticks / 960000.0;
 
             info.isLooping = false;
@@ -1652,7 +1694,7 @@ namespace AAXClasses
 
             if (isInAudioSuite())
             {
-                // AudioSuite doesnt support multiple output buses
+                // AudioSuite doesn't support multiple output buses
                 for (int i = 1; i < newLayout.outputBuses.size(); ++i)
                     newLayout.outputBuses.getReference (i) = AudioChannelSet::disabled();
 
@@ -1823,7 +1865,7 @@ namespace AAXClasses
                 if (LegacyAudioParameter::getParamID (aaxMeters[idx], false) == paramID)
                     break;
 
-            // you sepecified a parameter id in your curve but the parameter does not have the meter
+            // you specified a parameter id in your curve but the parameter does not have the meter
             // category
             jassert (idx < aaxMeters.size());
             return 'Metr' + static_cast<AAX_CTypeID> (idx);

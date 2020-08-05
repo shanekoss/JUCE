@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -319,10 +319,7 @@ static void copyAcrossUserSections (String& dest, const String& src)
 }
 
 //==============================================================================
-void GeneratedCode::applyToCode (String& code,
-                                 const File& targetFile,
-                                 const String& oldFileWithUserData,
-                                 Project* project) const
+void GeneratedCode::applyToCode (String& code, const File& targetFile, const String& oldFileWithUserData) const
 {
     replaceTemplate (code, "version", JUCEApplicationBase::getInstance()->getApplicationVersion());
     replaceTemplate (code, "creationTime", Time::getCurrentTime().toString (true, true, true));
@@ -337,10 +334,7 @@ void GeneratedCode::applyToCode (String& code,
 
     replaceTemplate (code, "method_definitions", getCallbackDefinitions());
 
-    File juceHeaderFile = project != nullptr ? project->getAppIncludeFile()
-                                             : targetFile.getSiblingFile ("JuceHeader.h");
-
-    replaceTemplate (code, "include_juce_header", CodeHelpers::createIncludeStatement (juceHeaderFile, targetFile));
+    replaceTemplate (code, "include_juce", CodeHelpers::createIncludePathIncludeStatement (Project::getJuceSourceHFilename()));
 
     replaceTemplate (code, "include_files_h", getIncludeFileCode (includeFilesH, targetFile));
     replaceTemplate (code, "include_files_cpp", getIncludeFileCode (includeFilesCPP, targetFile));

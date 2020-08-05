@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -998,6 +998,7 @@ namespace PixmapHelpers
         GC gc = XCreateGC (display, pixmap, 0, nullptr);
         XPutImage (display, pixmap, gc, ximage, 0, 0, 0, 0, width, height);
         XFreeGC (display, gc);
+        XFree (ximage);
 
         return pixmap;
     }
@@ -1526,6 +1527,9 @@ public:
         ScopedXLock xlock (display);
         XGetInputFocus (display, &focusedWindow, &revert);
 
+        if (focusedWindow == PointerRoot)
+            return false;
+
         return isParentWindowOf (focusedWindow);
     }
 
@@ -1754,7 +1758,7 @@ public:
                 case XK_Delete:
                 case XK_Insert:
                     keyPressed = true;
-                    keyCode = (keyCode & 0xff) | Keys::extendedKeyModifier;
+                    keyCode = static_cast<int> ((keyCode & 0xff) | Keys::extendedKeyModifier);
                     break;
 
                 case XK_Tab:
@@ -1774,7 +1778,7 @@ public:
                     if (sym >= XK_F1 && sym <= XK_F35)
                     {
                         keyPressed = true;
-                        keyCode = (sym & 0xff) | Keys::extendedKeyModifier;
+                        keyCode = static_cast<int> ((sym & 0xff) | Keys::extendedKeyModifier);
                     }
                     break;
             }
@@ -2433,9 +2437,9 @@ private:
         const int keybit = (1 << (keycode & 7));
 
         if (press)
-            Keys::keyStates [keybyte] |= keybit;
+            Keys::keyStates[keybyte] = static_cast<char> (Keys::keyStates[keybyte] | keybit);
         else
-            Keys::keyStates [keybyte] &= ~keybit;
+            Keys::keyStates[keybyte] = static_cast<char> (Keys::keyStates[keybyte] & ~keybit);
     }
 
     static void updateKeyModifiers (int status) noexcept
@@ -3505,7 +3509,7 @@ JUCE_API void JUCE_CALLTYPE Process::hide() {}
 void Desktop::setKioskComponent (Component* comp, bool enableOrDisable, bool /* allowMenusAndBars */)
 {
     if (enableOrDisable)
-        comp->setBounds (getDisplays().getMainDisplay().totalArea);
+        comp->setBounds (getDisplays().findDisplayForRect (comp->getScreenBounds()).totalArea);
 }
 
 void Desktop::allowedOrientationsChanged() {}
@@ -4041,6 +4045,8 @@ void MouseCursor::deleteMouseCursor (void* cursorHandle, bool)
         if (auto display = xDisplay.display)
         {
             ScopedXLock xlock (display);
+
+            cursorMap.erase ((Cursor) cursorHandle);
             XFreeCursor (display, (Cursor) cursorHandle);
         }
     }
@@ -4090,6 +4096,7 @@ void* MouseCursor::createStandardMouseCursor (MouseCursor::StandardCursorType ty
             return CustomMouseCursorInfo (ImageFileFormat::loadFrom (copyCursorData, copyCursorSize), { 1, 3 }).create();
         }
 
+        case NumStandardCursorTypes:
         default:
             jassertfalse;
             return None;
@@ -4107,18 +4114,18 @@ void MouseCursor::showInWindow (ComponentPeer* peer) const
 {
     if (auto* lp = dynamic_cast<LinuxComponentPeer*> (peer))
     {
+        auto cursor = (Cursor) getHandle();
+
         ScopedXDisplay xDisplay;
 
-        if (cursorHandle != nullptr && xDisplay.display != cursorMap[(Cursor) getHandle()])
+        if (cursorHandle != nullptr && xDisplay.display != cursorMap[cursor])
         {
-            auto oldHandle = (Cursor) getHandle();
+            cursorMap.erase (cursor);
 
             if (auto* customInfo = cursorHandle->getCustomInfo())
                 cursorHandle->setHandle (customInfo->create());
             else
                 cursorHandle->setHandle (createStandardMouseCursor (cursorHandle->getType()));
-
-            cursorMap.erase (oldHandle);
         }
 
         lp->showMouseCursor ((Cursor) getHandle());

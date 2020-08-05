@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -95,7 +95,7 @@ public:
 
             auto projectRootHash = project.getProjectRoot().toXmlString().hashCode();
 
-            if (project.getProjectType().isAudioPlugin())
+            if (project.isAudioPluginProject())
             {
                 writePluginCharacteristicsFile();
 
@@ -125,7 +125,7 @@ public:
 
             if (errors.size() == 0)
             {
-                // Workaround for a bug where Xcode thinks the project is invalid if opened immedietely
+                // Workaround for a bug where Xcode thinks the project is invalid if opened immediately
                 // after writing
                 if (waitAfterSaving)
                     Thread::sleep (2000);
@@ -157,7 +157,7 @@ public:
 
         if (errors.size() == 0)
         {
-            if (project.getProjectType().isAudioPlugin())
+            if (project.isAudioPluginProject())
                 writePluginCharacteristicsFile();
 
             writeAppConfigFile (modules, loadUserContentFromAppConfig());
@@ -348,7 +348,7 @@ private:
         return longest;
     }
 
-    File getAppConfigFile() const   { return generatedCodeFolder.getChildFile (project.getAppConfigFilename()); }
+    File getAppConfigFile() const   { return generatedCodeFolder.getChildFile (Project::getAppConfigFilename()); }
 
     String loadUserContentFromAppConfig() const
     {
@@ -525,7 +525,7 @@ private:
         mem.setNewLineString (projectLineFeed);
 
         writeAppConfig (mem, modules, userContent);
-        saveGeneratedFile (project.getAppConfigFilename(), mem);
+        saveGeneratedFile (Project::getAppConfigFilename(), mem);
     }
 
     void writeAppHeader (MemoryOutputStream& out, const OwnedArray<LibraryModule>& modules)
@@ -542,7 +542,7 @@ private:
         out << "#pragma once" << newLine << newLine;
 
         if (appConfigFile.exists())
-            out << CodeHelpers::createIncludeStatement (project.getAppConfigFilename()) << newLine;
+            out << CodeHelpers::createIncludeStatement (Project::getAppConfigFilename()) << newLine;
 
         if (modules.size() > 0)
         {
@@ -590,7 +590,7 @@ private:
         mem.setNewLineString (projectLineFeed);
 
         writeAppHeader (mem, modules);
-        saveGeneratedFile (project.getJuceSourceHFilename(), mem);
+        saveGeneratedFile (Project::getJuceSourceHFilename(), mem);
     }
 
     void writeModuleCppWrappers (const OwnedArray<LibraryModule>& modules)
@@ -606,7 +606,7 @@ private:
 
                 mem << "*/" << newLine
                     << newLine
-                    << "#include " << project.getAppConfigFilename().quoted() << newLine
+                    << "#include " << Project::getAppConfigFilename().quoted() << newLine
                     << "#include <";
 
                 if (cu.file.getFileExtension() != ".r")   // .r files are included without the path

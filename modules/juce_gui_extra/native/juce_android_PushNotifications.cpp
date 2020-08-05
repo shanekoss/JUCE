@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -1303,7 +1303,7 @@ struct PushNotifications::Pimpl
                     auto classAsString  = LocalRef<jstring> ((jstring) env->CallObjectMethod (objectClass, JavaClass.getName));
 
                     // Note: It seems that Firebase delivers values as strings always, so this check is rather unnecessary,
-                    //       at least untill they change the behaviour.
+                    //       at least until they change the behaviour.
                     var value = juceString (classAsString) == "java.lang.Bundle" ? bundleToVar (object) : var (juceString (objectAsString.get()));
                     dynamicObject->setProperty (juceString (key.get()), value);
                 }
@@ -1399,7 +1399,7 @@ struct PushNotifications::Pimpl
             propertiesDynamicObject->setProperty ("titleLocalizationKey",  juceString (titleLocalizationKey.get()));
             propertiesDynamicObject->setProperty ("bodyLocalizationArgs",  javaStringArrayToJuce (bodyLocalizationArgs));
             propertiesDynamicObject->setProperty ("titleLocalizationArgs", javaStringArrayToJuce (titleLocalizationArgs));
-            propertiesDynamicObject->setProperty ("link",                  link.get() == nullptr ? juceString ((jstring) env->CallObjectMethod (link, AndroidUri.toString)) : String());
+            propertiesDynamicObject->setProperty ("link",                  link.get() != nullptr ? juceString ((jstring) env->CallObjectMethod (link, AndroidUri.toString)) : String());
         }
 
         n.properties = var (propertiesDynamicObject.get());
@@ -1558,10 +1558,10 @@ struct JuceFirebaseInstanceIdService
     #define JNI_CLASS_MEMBERS(METHOD, STATICMETHOD, FIELD, STATICFIELD, CALLBACK) \
      CALLBACK (tokenRefreshed, "firebaseInstanceIdTokenRefreshed", "(Ljava/lang/String;)V")
 
-     DECLARE_JNI_CLASS (InstanceIdService, "com/roli/juce/JuceFirebaseInstanceIdService")
+     DECLARE_JNI_CLASS (InstanceIdService, "com/rmsl/juce/JuceFirebaseInstanceIdService")
     #undef JNI_CLASS_MEMBERS
 
-    static void JNICALL tokenRefreshed (void* token)
+    static void JNICALL tokenRefreshed (JNIEnv*, jobject /*instanceIdService*/, void* token)
     {
         if (auto* instance = PushNotifications::getInstanceWithoutCreating())
             instance->pimpl->notifyListenersTokenRefreshed (juceString (static_cast<jstring> (token)));
@@ -1577,11 +1577,11 @@ struct JuceFirebaseMessagingService
 {
     #define JNI_CLASS_MEMBERS(METHOD, STATICMETHOD, FIELD, STATICFIELD, CALLBACK) \
      CALLBACK (remoteNotificationReceived,  "firebaseRemoteMessageReceived",  "(Lcom/google/firebase/messaging/RemoteMessage;)V") \
-     CALLBACK (remoteMessagesDeleted,  "firebaseRemoteMessagesDeleted",  "()V") \
-     CALLBACK (remoteMessageSent,      "firebaseRemoteMessageSent",      "(Ljava/lang/String;)V") \
-     CALLBACK (remoteMessageSendError, "firebaseRemoteMessageSendError", "(Ljava/lang/String;Ljava/lang/String;)V")
+     CALLBACK (remoteMessagesDeleted,       "firebaseRemoteMessagesDeleted",  "()V") \
+     CALLBACK (remoteMessageSent,           "firebaseRemoteMessageSent",      "(Ljava/lang/String;)V") \
+     CALLBACK (remoteMessageSendError,      "firebaseRemoteMessageSendError", "(Ljava/lang/String;Ljava/lang/String;)V")
 
-     DECLARE_JNI_CLASS (MessagingService, "com/roli/juce/JuceFirebaseMessagingService")
+     DECLARE_JNI_CLASS (MessagingService, "com/rmsl/juce/JuceFirebaseMessagingService")
     #undef JNI_CLASS_MEMBERS
 
     static void JNICALL remoteNotificationReceived (JNIEnv*, jobject /*messagingService*/, void* remoteMessage)

@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -532,7 +532,7 @@ public:
     /** Returns the index of this item in its parent's sub-items. */
     int getIndexInParent() const noexcept;
 
-    /** Returns true if this item is the last of its parent's sub-itens. */
+    /** Returns true if this item is the last of its parent's sub-items. */
     bool isLastOfSiblings() const noexcept;
 
     /** Creates a string that can be used to uniquely retrieve this item in the tree.
@@ -842,8 +842,8 @@ public:
         linesColourId                  = 0x1000501, /**< The colour to draw the lines with.*/
         dragAndDropIndicatorColourId   = 0x1000502, /**< The colour to use for the drag-and-drop target position indicator. */
         selectedItemBackgroundColourId = 0x1000503, /**< The colour to use to fill the background of any selected items. */
-        oddItemsColourId               = 0x1000504, /**< The colour to use to fill the backround of the odd numbered items. */
-        evenItemsColourId              = 0x1000505  /**< The colour to use to fill the backround of the even numbered items. */
+        oddItemsColourId               = 0x1000504, /**< The colour to use to fill the background of the odd numbered items. */
+        evenItemsColourId              = 0x1000505  /**< The colour to use to fill the background of the even numbered items. */
     };
 
     //==============================================================================

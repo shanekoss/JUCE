@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2019 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
@@ -27,11 +27,13 @@ namespace juce
 
 /**
     Represents traversal paths from master blocks and any connected blocks.
+
+    @tags{Blocks}
 */
 class BlockGraph
 {
 public:
-    /** Creates a BlockGraph object from a BlockTopology with an optional filter fucntion. This
+    /** Creates a BlockGraph object from a BlockTopology with an optional filter function. This
         will build a block graph of traversal paths for each master.
     */
     BlockGraph (const BlockTopology topology, std::function<bool(Block::Ptr block)> filter = nullptr);

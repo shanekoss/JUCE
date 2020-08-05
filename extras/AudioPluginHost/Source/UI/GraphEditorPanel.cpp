@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -24,7 +24,7 @@
   ==============================================================================
 */
 
-#include "../JuceLibraryCode/JuceHeader.h"
+#include <JuceHeader.h>
 #include "GraphEditorPanel.h"
 #include "../Plugins/InternalPlugins.h"
 #include "MainHostWindow.h"
@@ -1167,10 +1167,13 @@ GraphDocumentComponent::GraphDocumentComponent (AudioPluginFormatManager& fm,
     deviceManager.addChangeListener (graphPanel.get());
     deviceManager.addAudioCallback (&graphPlayer);
     deviceManager.addMidiInputDeviceCallback ({}, &graphPlayer.getMidiMessageCollector());
+    deviceManager.addChangeListener (this);
 }
 
 void GraphDocumentComponent::init()
 {
+    updateMidiOutput();
+
     graphPanel.reset (new GraphEditorPanel (*graph));
     addAndMakeVisible (graphPanel.get());
     graphPlayer.setProcessor (&graph->graph);
@@ -1213,6 +1216,9 @@ void GraphDocumentComponent::init()
 
 GraphDocumentComponent::~GraphDocumentComponent()
 {
+    if (midiOutput != nullptr)
+        midiOutput->stopBackgroundThread();
+
     releaseGraph();
 
     keyState.removeListener (&graphPlayer.getMidiMessageCollector());
@@ -1325,4 +1331,24 @@ void GraphDocumentComponent::setDoublePrecision (bool doublePrecision)
 bool GraphDocumentComponent::closeAnyOpenPluginWindows()
 {
     return graphPanel->graph.closeAnyOpenPluginWindows();
+}
+
+void GraphDocumentComponent::changeListenerCallback (ChangeBroadcaster*)
+{
+    updateMidiOutput();
+}
+
+void GraphDocumentComponent::updateMidiOutput()
+{
+    auto* defaultMidiOutput = deviceManager.getDefaultMidiOutput();
+
+    if (midiOutput != defaultMidiOutput)
+    {
+        midiOutput = defaultMidiOutput;
+
+        if (midiOutput != nullptr)
+            midiOutput->startBackgroundThread();
+
+        graphPlayer.setMidiOutput (midiOutput);
+    }
 }

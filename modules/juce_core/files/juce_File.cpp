@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
@@ -104,6 +104,26 @@ static String removeEllipsis (const String& path)
     return path;
 }
 
+static String normaliseSeparators (const String& path)
+{
+    auto normalisedPath = path;
+
+    String separator (File::getSeparatorString());
+    String doubleSeparator (separator + separator);
+
+    auto uncPath = normalisedPath.startsWith (doubleSeparator)
+                  && ! normalisedPath.fromFirstOccurrenceOf (doubleSeparator, false, false).startsWith (separator);
+
+    if (uncPath)
+        normalisedPath = normalisedPath.fromFirstOccurrenceOf (doubleSeparator, false, false);
+
+    while (normalisedPath.contains (doubleSeparator))
+         normalisedPath = normalisedPath.replace (doubleSeparator, separator);
+
+    return uncPath ? doubleSeparator + normalisedPath
+                   : normalisedPath;
+}
+
 bool File::isRoot() const
 {
     return fullPath.isNotEmpty() && *this == getParentDirectory();
@@ -114,9 +134,9 @@ String File::parseAbsolutePath (const String& p)
     if (p.isEmpty())
         return {};
 
-#if JUCE_WINDOWS
+   #if JUCE_WINDOWS
     // Windows..
-    auto path = removeEllipsis (p.replaceCharacter ('/', '\\'));
+    auto path = normaliseSeparators (removeEllipsis (p.replaceCharacter ('/', '\\')));
 
     if (path.startsWithChar (getSeparatorChar()))
     {
@@ -147,7 +167,7 @@ String File::parseAbsolutePath (const String& p)
 
         return File::getCurrentWorkingDirectory().getChildFile (path).getFullPathName();
     }
-#else
+   #else
     // Mac or Linux..
 
     // Yes, I know it's legal for a unix pathname to contain a backslash, but this assertion is here
@@ -155,7 +175,7 @@ String File::parseAbsolutePath (const String& p)
     // If that's why you've ended up here, use File::getChildFile() to build your paths instead.
     jassert ((! p.containsChar ('\\')) || (p.indexOfChar ('/') >= 0 && p.indexOfChar ('/') < p.indexOfChar ('\\')));
 
-    auto path = removeEllipsis (p);
+    auto path = normaliseSeparators (removeEllipsis (p));
 
     if (path.startsWithChar ('~'))
     {
@@ -196,7 +216,7 @@ String File::parseAbsolutePath (const String& p)
 
         return File::getCurrentWorkingDirectory().getChildFile (path).getFullPathName();
     }
-#endif
+   #endif
 
     while (path.endsWithChar (getSeparatorChar()) && path != getSeparatorString()) // careful not to turn a single "/" into an empty string.
         path = path.dropLastCharacters (1);
@@ -706,22 +726,24 @@ bool File::startAsProcess (const String& parameters) const
 }
 
 //==============================================================================
-FileInputStream* File::createInputStream() const
+std::unique_ptr<FileInputStream> File::createInputStream() const
 {
-    std::unique_ptr<FileInputStream> fin (new FileInputStream (*this));
+    auto fin = std::make_unique<FileInputStream> (*this);
 
     if (fin->openedOk())
-        return fin.release();
+        return fin;
 
     return nullptr;
 }
 
-FileOutputStream* File::createOutputStream (size_t bufferSize) const
+std::unique_ptr<FileOutputStream> File::createOutputStream (size_t bufferSize) const
 {
-    std::unique_ptr<FileOutputStream> out (new FileOutputStream (*this, bufferSize));
+    auto fout = std::make_unique<FileOutputStream> (*this, bufferSize);
 
-    return out->failedToOpen() ? nullptr
-                               : out.release();
+    if (fout->openedOk())
+        return fout;
+
+    return nullptr;
 }
 
 //==============================================================================
@@ -733,8 +755,8 @@ bool File::appendData (const void* const dataToAppend,
     if (numberOfBytes == 0)
         return true;
 
-    FileOutputStream out (*this, 8192);
-    return out.openedOk() && out.write (dataToAppend, numberOfBytes);
+    FileOutputStream fout (*this, 8192);
+    return fout.openedOk() && fout.write (dataToAppend, numberOfBytes);
 }
 
 bool File::replaceWithData (const void* const dataToWrite,
@@ -750,12 +772,12 @@ bool File::replaceWithData (const void* const dataToWrite,
 
 bool File::appendText (const String& text, bool asUnicode, bool writeHeaderBytes, const char* lineFeed) const
 {
-    FileOutputStream out (*this);
+    FileOutputStream fout (*this);
 
-    if (out.failedToOpen())
+    if (fout.failedToOpen())
         return false;
 
-    return out.writeText (text, asUnicode, writeHeaderBytes, lineFeed);
+    return fout.writeText (text, asUnicode, writeHeaderBytes, lineFeed);
 }
 
 bool File::replaceWithText (const String& textToWrite, bool asUnicode, bool writeHeaderBytes, const char* lineFeed) const

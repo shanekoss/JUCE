@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -24,6 +24,7 @@
   ==============================================================================
 */
 
+
 /*******************************************************************************
  The block below describes the properties of this module, and is read by
  the Projucer to automatically generate project code that uses it.
@@ -33,17 +34,17 @@
 
  BEGIN_JUCE_MODULE_DECLARATION
 
-  ID:               juce_audio_formats
-  vendor:           juce
-  version:          5.4.5
-  name:             JUCE audio file format codecs
-  description:      Classes for reading and writing various audio file formats.
-  website:          http://www.juce.com/juce
-  license:          GPL/Commercial
+  ID:                 juce_audio_formats
+  vendor:             juce
+  version:            5.4.7
+  name:               JUCE audio file format codecs
+  description:        Classes for reading and writing various audio file formats.
+  website:            http://www.juce.com/juce
+  license:            GPL/Commercial
 
-  dependencies:     juce_audio_basics
-  OSXFrameworks:    CoreAudio CoreMIDI QuartzCore AudioToolbox
-  iOSFrameworks:    AudioToolbox QuartzCore
+  dependencies:       juce_audio_basics
+  OSXFrameworks:      CoreAudio CoreMIDI QuartzCore AudioToolbox
+  iOSFrameworks:      AudioToolbox QuartzCore
 
  END_JUCE_MODULE_DECLARATION
 
@@ -78,8 +79,8 @@
     Enables the software-based MP3AudioFormat class.
     IMPORTANT DISCLAIMER: By choosing to enable the JUCE_USE_MP3AUDIOFORMAT flag and to compile
     this MP3 code into your software, you do so AT YOUR OWN RISK! By doing so, you are agreeing
-    that ROLI Ltd. is in no way responsible for any patent, copyright, or other legal issues
-    that you may suffer as a result.
+    that Raw Material Software Limited is in no way responsible for any patent, copyright, or other
+    legal issues that you may suffer as a result.
 
     The code in juce_MP3AudioFormat.cpp is NOT guaranteed to be free from infringements of 3rd-party
     intellectual property. If you wish to use it, please seek your own independent advice about the

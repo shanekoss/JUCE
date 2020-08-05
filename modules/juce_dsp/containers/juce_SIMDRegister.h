@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -40,7 +40,7 @@ namespace dsp
     A wrapper around the platform's native SIMD register type.
 
     This class is only available on SIMD machines. Use JUCE_USE_SIMD to query
-    if SIMD is avaialble for your system.
+    if SIMD is available for your system.
 
     SIMDRegister<Type> is a templated class representing the native
     vectorized version of FloatingType. SIMDRegister supports all numerical
@@ -117,7 +117,7 @@ struct SIMDRegister
     /** Constructs an object from a scalar type by broadcasting it to all elements. */
     inline SIMDRegister (Type s) noexcept  { *this = s; }
 
-    /** Destrutor. */
+    /** Destructor. */
     inline ~SIMDRegister() noexcept = default;
 
     //==============================================================================
@@ -204,23 +204,23 @@ struct SIMDRegister
     inline SIMDRegister& JUCE_VECTOR_CALLTYPE operator*= (ElementType s) noexcept       { value = CmplxOps::mul (value, CmplxOps::expand (s)); return *this; }
 
     //==============================================================================
-    /** Bit-and the reciver with SIMDRegister v and store the result in the receiver. */
+    /** Bit-and the receiver with SIMDRegister v and store the result in the receiver. */
     inline SIMDRegister& JUCE_VECTOR_CALLTYPE operator&= (vMaskType v) noexcept         { value = NativeOps::bit_and (value, toVecType (v.value)); return *this; }
 
-    /** Bit-or the reciver with SIMDRegister v and store the result in the receiver. */
+    /** Bit-or the receiver with SIMDRegister v and store the result in the receiver. */
     inline SIMDRegister& JUCE_VECTOR_CALLTYPE operator|= (vMaskType v) noexcept         { value = NativeOps::bit_or  (value, toVecType (v.value)); return *this; }
 
-    /** Bit-xor the reciver with SIMDRegister v and store the result in the receiver. */
+    /** Bit-xor the receiver with SIMDRegister v and store the result in the receiver. */
     inline SIMDRegister& JUCE_VECTOR_CALLTYPE operator^= (vMaskType v) noexcept         { value = NativeOps::bit_xor (value, toVecType (v.value)); return *this; }
 
     //==============================================================================
-    /** Bit-and each element of the reciver with the scalar s and store the result in the receiver.*/
+    /** Bit-and each element of the receiver with the scalar s and store the result in the receiver.*/
     inline SIMDRegister& JUCE_VECTOR_CALLTYPE operator&= (MaskType s) noexcept           { value = NativeOps::bit_and (value, toVecType (s)); return *this; }
 
-    /** Bit-or each element of the reciver with the scalar s and store the result in the receiver.*/
+    /** Bit-or each element of the receiver with the scalar s and store the result in the receiver.*/
     inline SIMDRegister& JUCE_VECTOR_CALLTYPE operator|= (MaskType s) noexcept           { value = NativeOps::bit_or  (value, toVecType (s)); return *this; }
 
-    /** Bit-xor each element of the reciver with the scalar s and store the result in the receiver.*/
+    /** Bit-xor each element of the receiver with the scalar s and store the result in the receiver.*/
     inline SIMDRegister& JUCE_VECTOR_CALLTYPE operator^= (MaskType s) noexcept           { value = NativeOps::bit_xor (value, toVecType (s)); return *this; }
 
     //==============================================================================

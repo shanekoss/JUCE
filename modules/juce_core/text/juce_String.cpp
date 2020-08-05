@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
@@ -393,7 +393,7 @@ namespace NumberToStringConverters
 
         do
         {
-            *--t = '0' + (char) (v % 10);
+            *--t = static_cast<char> ('0' + (char) (v % 10));
             v /= 10;
 
         } while (v > 0);
@@ -815,9 +815,10 @@ namespace StringHelpers
     }
 }
 
-String& String::operator+= (const int number)          { return StringHelpers::operationAddAssign<int>          (*this, number); }
-String& String::operator+= (const int64 number)        { return StringHelpers::operationAddAssign<int64>        (*this, number); }
-String& String::operator+= (const uint64 number)       { return StringHelpers::operationAddAssign<uint64>       (*this, number); }
+String& String::operator+= (const int number)     { return StringHelpers::operationAddAssign<int>    (*this, number); }
+String& String::operator+= (const long number)    { return StringHelpers::operationAddAssign<long>   (*this, number); }
+String& String::operator+= (const int64 number)   { return StringHelpers::operationAddAssign<int64>  (*this, number); }
+String& String::operator+= (const uint64 number)  { return StringHelpers::operationAddAssign<uint64> (*this, number); }
 
 //==============================================================================
 JUCE_API String JUCE_CALLTYPE operator+ (const char* s1, const String& s2)    { String s (s1); return s += s2; }
@@ -1912,7 +1913,7 @@ static String hexToString (Type v)
     do
     {
         *--t = hexDigits [(int) (v & 15)];
-        v >>= 4;
+        v = static_cast<Type> (v >> 4);
 
     } while (v != 0);
 

@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -409,12 +409,16 @@ static String getFallbackPathForOS (const Identifier& key, DependencyPathOS os)
     }
     else if (key == Ids::androidSDKPath)
     {
-        return (os == TargetOS::linux ? "${user.home}/Android/Sdk" :
-                                        "${user.home}/Library/Android/sdk");
+        if      (os == TargetOS::windows)  return "${user.home}\\AppData\\Local\\Android\\Sdk";
+        else if (os == TargetOS::osx)      return "${user.home}/Library/Android/sdk";
+        else if (os == TargetOS::linux)    return "${user.home}/Android/Sdk";
+
+        jassertfalse;
+        return {};
     }
     else if (key == Ids::androidNDKPath)
     {
-        return getFallbackPathForOS (Ids::androidSDKPath, os) + "/ndk-bundle";
+        return getFallbackPathForOS (Ids::androidSDKPath, os) + File::getSeparatorChar() + "ndk-bundle";
     }
     else if (key == Ids::clionExePath)
     {

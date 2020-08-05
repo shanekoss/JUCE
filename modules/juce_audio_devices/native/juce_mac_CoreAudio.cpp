@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
@@ -31,7 +31,7 @@ namespace juce
 
 #ifdef __clang__
  #pragma clang diagnostic push
- #pragma clang diagnostic ignored "-Wnonnull" // aovid some spurious 10.11 SDK warnings
+ #pragma clang diagnostic ignored "-Wnonnull" // avoid some spurious 10.11 SDK warnings
 #endif
 
 //==============================================================================

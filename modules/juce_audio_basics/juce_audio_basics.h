@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
@@ -20,6 +20,7 @@
   ==============================================================================
 */
 
+
 /*******************************************************************************
  The block below describes the properties of this module, and is read by
  the Projucer to automatically generate project code that uses it.
@@ -29,17 +30,17 @@
 
  BEGIN_JUCE_MODULE_DECLARATION
 
-  ID:               juce_audio_basics
-  vendor:           juce
-  version:          5.4.5
-  name:             JUCE audio and MIDI data classes
-  description:      Classes for audio buffer manipulation, midi message handling, synthesis, etc.
-  website:          http://www.juce.com/juce
-  license:          ISC
+  ID:                 juce_audio_basics
+  vendor:             juce
+  version:            5.4.7
+  name:               JUCE audio and MIDI data classes
+  description:        Classes for audio buffer manipulation, midi message handling, synthesis, etc.
+  website:            http://www.juce.com/juce
+  license:            ISC
 
-  dependencies:     juce_core
-  OSXFrameworks:    Accelerate
-  iOSFrameworks:    Accelerate
+  dependencies:       juce_core
+  OSXFrameworks:      Accelerate
+  iOSFrameworks:      Accelerate
 
  END_JUCE_MODULE_DECLARATION
 

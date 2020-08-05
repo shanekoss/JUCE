@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -54,9 +54,7 @@ public:
         addAndMakeVisible (modulesLabel);
         modulesLabel.attachToComponent (&currentPathBox, true);
 
-        addAndMakeVisible (useGlobalPathsToggle);
-        useGlobalPathsToggle.setToggleState (true, sendNotification);
-        useGlobalPathsToggle.onClick = [this]
+        auto updateEnablement = [this]
         {
             isUsingGlobalPaths = useGlobalPathsToggle.getToggleState();
 
@@ -64,6 +62,12 @@ public:
             openFolderButton.setEnabled (! isUsingGlobalPaths);
             modulesLabel.setEnabled     (! isUsingGlobalPaths);
         };
+
+        addAndMakeVisible (useGlobalPathsToggle);
+        useGlobalPathsToggle.setToggleState (true, sendNotification);
+        useGlobalPathsToggle.onClick = [updateEnablement] { updateEnablement(); };
+
+        updateEnablement();
     }
 
     void resized() override
@@ -419,7 +423,10 @@ public:
                     return;
 
                 if (modulesPathBox.isUsingGlobalPaths)
+                {
                     getAppSettings().getStoredPath (Ids::defaultJuceModulePath, TargetOS::getThisOS()).setValue (wizard->modulesFolder.getFullPathName(), nullptr);
+                    ProjucerApplication::getApp().rescanJUCEPathModules();
+                }
             }
 
             auto projectDir = fileBrowser.getSelectedFile (0);
@@ -429,7 +436,7 @@ public:
 
             if (project != nullptr)
             {
-                mw->setProject (project.release());
+                mw->setProject (std::move (project));
                 getAppSettings().lastWizardFolder = projectDir.getParentDirectory();
             }
         }

@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -26,7 +26,7 @@
 
 #if JUCE_MAC || JUCE_IOS
 
-#include "../../juce_audio_basics/native/juce_mac_CoreAudioLayouts.h"
+#include <juce_audio_basics/native/juce_mac_CoreAudioLayouts.h>
 
 namespace juce
 {
@@ -352,9 +352,9 @@ public:
 
         auto status = AudioFileOpenWithCallbacks (this,
                                                   &readCallback,
-                                                  nullptr,  // write needs to be null to avoid permisisions errors
+                                                  nullptr,  // write needs to be null to avoid permissions errors
                                                   &getSizeCallback,
-                                                  nullptr,  // setSize needs to be null to avoid permisisions errors
+                                                  nullptr,  // setSize needs to be null to avoid permissions errors
                                                   0,        // AudioFileTypeID inFileTypeHint
                                                   &audioFileID);
         if (status == noErr)
@@ -616,7 +616,7 @@ public:
         : UnitTest ("Core Audio Layout <-> JUCE channel layout conversion", UnitTestCategories::audio)
     {}
 
-    // some ambisonic tags which are not explicitely defined
+    // some ambisonic tags which are not explicitly defined
     enum
     {
         kAudioChannelLayoutTag_HOA_ACN_SN3D_0Order = (190U<<16) | 1,

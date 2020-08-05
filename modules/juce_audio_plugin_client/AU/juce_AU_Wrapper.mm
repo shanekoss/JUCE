@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -23,7 +23,7 @@
 
   ==============================================================================
 */
-#include "../../juce_core/system/juce_TargetPlatform.h"
+#include <juce_core/system/juce_TargetPlatform.h>
 #include "../utility/juce_CheckSettingMacros.h"
 
 #if JucePlugin_Build_AU
@@ -44,6 +44,7 @@
  #pragma clang diagnostic ignored "-Wextra-semi"
  #pragma clang diagnostic ignored "-Wcast-align"
  #pragma clang diagnostic ignored "-Wshadow"
+ #pragma clang diagnostic ignored "-Wswitch-enum"
  #if __has_warning("-Wzero-as-null-pointer-constant")
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
  #endif
@@ -88,9 +89,9 @@
 #include "../utility/juce_FakeMouseMoveGenerator.h"
 #include "../utility/juce_CarbonVisibility.h"
 
-#include "../../juce_audio_basics/native/juce_mac_CoreAudioLayouts.h"
-#include "../../juce_audio_processors/format_types/juce_LegacyAudioParameter.cpp"
-#include "../../juce_audio_processors/format_types/juce_AU_Shared.h"
+#include <juce_audio_basics/native/juce_mac_CoreAudioLayouts.h>
+#include <juce_audio_processors/format_types/juce_LegacyAudioParameter.cpp>
+#include <juce_audio_processors/format_types/juce_AU_Shared.h>
 
 //==============================================================================
 using namespace juce;
@@ -129,12 +130,11 @@ class JuceAU   : public AudioProcessorHolder,
                  public MusicDeviceBase,
                  public AudioProcessorListener,
                  public AudioPlayHead,
-                 public ComponentListener,
                  public AudioProcessorParameter::Listener
 {
 public:
     JuceAU (AudioUnit component)
-        : AudioProcessorHolder(activePlugins.size() + activeUIs.size() == 0),
+        : AudioProcessorHolder (activePlugins.size() + activeUIs.size() == 0),
           MusicDeviceBase (component,
                            (UInt32) AudioUnitHelpers::getBusCount (juceFilter.get(), true),
                            (UInt32) AudioUnitHelpers::getBusCount (juceFilter.get(), false)),
@@ -702,7 +702,12 @@ public:
         if (juceFilter != nullptr)
         {
             juce::MemoryBlock state;
+
+           #if JUCE_AU_WRAPPERS_SAVE_PROGRAM_STATES
             juceFilter->getCurrentProgramStateInformation (state);
+           #else
+            juceFilter->getStateInformation (state);
+           #endif
 
             if (state.getSize() > 0)
             {
@@ -749,7 +754,13 @@ public:
                     const juce::uint8* const rawBytes = CFDataGetBytePtr (data);
 
                     if (numBytes > 0)
+                    {
+                       #if JUCE_AU_WRAPPERS_SAVE_PROGRAM_STATES
                         juceFilter->setCurrentProgramStateInformation (rawBytes, numBytes);
+                       #else
+                        juceFilter->setStateInformation (rawBytes, numBytes);
+                       #endif
+                    }
                 }
             }
         }
@@ -1074,16 +1085,19 @@ public:
 
         switch (lastTimeStamp.mSMPTETime.mType)
         {
-            case kSMPTETimeType2398:        info.frameRate = AudioPlayHead::fps23976; break;
-            case kSMPTETimeType24:          info.frameRate = AudioPlayHead::fps24; break;
-            case kSMPTETimeType25:          info.frameRate = AudioPlayHead::fps25; break;
-            case kSMPTETimeType30Drop:      info.frameRate = AudioPlayHead::fps30drop; break;
-            case kSMPTETimeType30:          info.frameRate = AudioPlayHead::fps30; break;
-            case kSMPTETimeType2997:        info.frameRate = AudioPlayHead::fps2997; break;
+            case kSMPTETimeType2398:        info.frameRate = AudioPlayHead::fps23976;    break;
+            case kSMPTETimeType24:          info.frameRate = AudioPlayHead::fps24;       break;
+            case kSMPTETimeType25:          info.frameRate = AudioPlayHead::fps25;       break;
+            case kSMPTETimeType30Drop:      info.frameRate = AudioPlayHead::fps30drop;   break;
+            case kSMPTETimeType30:          info.frameRate = AudioPlayHead::fps30;       break;
+            case kSMPTETimeType2997:        info.frameRate = AudioPlayHead::fps2997;     break;
             case kSMPTETimeType2997Drop:    info.frameRate = AudioPlayHead::fps2997drop; break;
-            case kSMPTETimeType60:          info.frameRate = AudioPlayHead::fps60; break;
-            case kSMPTETimeType60Drop:      info.frameRate = AudioPlayHead::fps60drop; break;
-            default:                        info.frameRate = AudioPlayHead::fpsUnknown; break;
+            case kSMPTETimeType60:          info.frameRate = AudioPlayHead::fps60;       break;
+            case kSMPTETimeType60Drop:      info.frameRate = AudioPlayHead::fps60drop;   break;
+            case kSMPTETimeType5994:
+            case kSMPTETimeType5994Drop:
+            case kSMPTETimeType50:
+            default:                        info.frameRate = AudioPlayHead::fpsUnknown;  break;
         }
 
         if (CallHostBeatAndTempo (&info.ppqPosition, &info.bpm) != noErr)
@@ -1445,25 +1459,6 @@ public:
         return noErr;
     }
 
-    void componentMovedOrResized (Component& component, bool /*wasMoved*/, bool /*wasResized*/) override
-    {
-        NSView* view = (NSView*) component.getWindowHandle();
-        NSRect r = [[view superview] frame];
-        r.origin.y = r.origin.y + r.size.height - component.getHeight();
-        r.size.width = component.getWidth();
-        r.size.height = component.getHeight();
-
-        [CATransaction begin];
-        [CATransaction setValue:(id)kCFBooleanTrue forKey:kCATransactionDisableActions];
-
-        [[view superview] setFrame: r];
-        [view setFrame: makeNSRect (component.getLocalBounds())];
-
-        [CATransaction commit];
-
-        [view setNeedsDisplay: YES];
-    }
-
     //==============================================================================
     class EditorCompHolder  : public Component
     {
@@ -1480,6 +1475,8 @@ public:
 
             ignoreUnused (fakeMouseGenerator);
             setBounds (getSizeToContainChild());
+
+            lastBounds = getBounds();
         }
 
         ~EditorCompHolder() override
@@ -1499,7 +1496,7 @@ public:
         static NSView* createViewFor (AudioProcessor* filter, JuceAU* au, AudioProcessorEditor* const editor)
         {
             auto* editorCompHolder = new EditorCompHolder (editor);
-            auto r = makeNSRect (editorCompHolder->getSizeToContainChild());
+            auto r = convertToHostBounds (makeNSRect (editorCompHolder->getSizeToContainChild()));
 
             static JuceUIViewClass cls;
             auto* view = [[cls.createInstance() initWithFrame: r] autorelease];
@@ -1523,6 +1520,14 @@ public:
             return view;
         }
 
+        void parentSizeChanged() override
+        {
+            resizeHostWindow();
+
+            if (auto* editor = getChildComponent (0))
+                editor->repaint();
+        }
+
         void childBoundsChanged (Component*) override
         {
             auto b = getSizeToContainChild();
@@ -1530,25 +1535,9 @@ public:
             if (lastBounds != b)
             {
                 lastBounds = b;
+                setSize (jmax (32, b.getWidth()), jmax (32, b.getHeight()));
 
-                auto w = jmax (32, b.getWidth());
-                auto h = jmax (32, b.getHeight());
-
-                setSize (w, h);
-
-                auto* view = (NSView*) getWindowHandle();
-                auto r = [[view superview] frame];
-                r.size.width  = w;
-                r.size.height = h;
-
-                [CATransaction begin];
-                [CATransaction setValue:(id) kCFBooleanTrue forKey:kCATransactionDisableActions];
-
-                [[view superview] setFrame: r];
-                [view setFrame: makeNSRect (b)];
-                [CATransaction commit];
-
-                [view setNeedsDisplay: YES];
+                resizeHostWindow();
             }
         }
 
@@ -1574,6 +1563,25 @@ public:
             }
 
             return false;
+        }
+
+        void resizeHostWindow()
+        {
+            [CATransaction begin];
+            [CATransaction setValue:(id) kCFBooleanTrue forKey:kCATransactionDisableActions];
+
+            auto rect = convertToHostBounds (makeNSRect (lastBounds));
+            auto* view = (NSView*) getWindowHandle();
+
+            auto superRect = [[view superview] frame];
+            superRect.size.width  = rect.size.width;
+            superRect.size.height = rect.size.height;
+
+            [[view superview] setFrame: superRect];
+            [view setFrame: rect];
+            [CATransaction commit];
+
+            [view setNeedsDisplay: YES];
         }
 
     private:
@@ -1769,6 +1777,33 @@ private:
     AudioProcessorParameter* bypassParam = nullptr;
 
     //==============================================================================
+    static NSRect convertToHostBounds (NSRect pluginRect)
+    {
+        auto desktopScale = Desktop::getInstance().getGlobalScaleFactor();
+
+        if (approximatelyEqual (desktopScale, 1.0f))
+            return pluginRect;
+
+        return NSMakeRect (static_cast<CGFloat> (pluginRect.origin.x    * desktopScale),
+                           static_cast<CGFloat> (pluginRect.origin.y    * desktopScale),
+                           static_cast<CGFloat> (pluginRect.size.width  * desktopScale),
+                           static_cast<CGFloat> (pluginRect.size.height * desktopScale));
+    }
+
+    static NSRect convertFromHostBounds (NSRect hostRect)
+    {
+        auto desktopScale = Desktop::getInstance().getGlobalScaleFactor();
+
+        if (approximatelyEqual (desktopScale, 1.0f))
+            return hostRect;
+
+        return NSMakeRect (static_cast<CGFloat> (hostRect.origin.x    / desktopScale),
+                           static_cast<CGFloat> (hostRect.origin.y    / desktopScale),
+                           static_cast<CGFloat> (hostRect.size.width  / desktopScale),
+                           static_cast<CGFloat> (hostRect.size.height / desktopScale));
+    }
+
+    //==============================================================================
     void pullInputAudio (AudioUnitRenderActionFlags& flags, const AudioTimeStamp& timestamp, const UInt32 nFrames) noexcept
     {
         const unsigned int numInputBuses = GetScope (kAudioUnitScope_Input).GetNumberOfElements();
@@ -1800,7 +1835,7 @@ private:
         }
     }
 
-    void processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiBuffer) noexcept
+    void processBlock (juce::AudioBuffer<float>& buffer, MidiBuffer& midiBuffer) noexcept
     {
         const ScopedLock sl (juceFilter->getCallbackLock());
 

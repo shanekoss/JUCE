@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
@@ -47,20 +47,6 @@ void CriticalSection::enter() const noexcept        { EnterCriticalSection ((CRI
 bool CriticalSection::tryEnter() const noexcept     { return TryEnterCriticalSection ((CRITICAL_SECTION*) lock) != FALSE; }
 void CriticalSection::exit() const noexcept         { LeaveCriticalSection ((CRITICAL_SECTION*) lock); }
 
-
-//==============================================================================
-WaitableEvent::WaitableEvent (const bool manualReset) noexcept
-    : handle (CreateEvent (0, manualReset ? TRUE : FALSE, FALSE, 0)) {}
-
-WaitableEvent::~WaitableEvent() noexcept        { CloseHandle (handle); }
-
-void WaitableEvent::signal() const noexcept     { SetEvent (handle); }
-void WaitableEvent::reset() const noexcept      { ResetEvent (handle); }
-
-bool WaitableEvent::wait (const int timeOutMs) const noexcept
-{
-    return WaitForSingleObject (handle, (DWORD) timeOutMs) == WAIT_OBJECT_0;
-}
 
 //==============================================================================
 void JUCE_API juce_threadEntryPoint (void*);
@@ -258,15 +244,8 @@ void JUCE_CALLTYPE Process::setCurrentModuleInstanceHandle (void* const newHandl
     currentModuleHandle = newHandle;
 }
 
-void JUCE_CALLTYPE Process::raisePrivilege()
-{
-    jassertfalse; // xxx not implemented
-}
-
-void JUCE_CALLTYPE Process::lowerPrivilege()
-{
-    jassertfalse; // xxx not implemented
-}
+void JUCE_CALLTYPE Process::raisePrivilege() {}
+void JUCE_CALLTYPE Process::lowerPrivilege() {}
 
 void JUCE_CALLTYPE Process::terminate()
 {

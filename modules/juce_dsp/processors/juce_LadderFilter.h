@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -73,7 +73,7 @@ public:
         @param newValue a value between 0 and 1; higher values increase the resonance and can result in self oscillation! */
     void setResonance (Type newValue) noexcept;
 
-    /** Sets the amound of saturation in the filter.
+    /** Sets the amount of saturation in the filter.
         @param newValue saturation amount; it can be any number greater than or equal to one. Higher values result in more distortion.*/
     void setDrive (Type newValue) noexcept;
 

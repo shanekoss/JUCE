@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -326,6 +326,7 @@ void Project::removeDefunctExporters()
     oldExporters.set ("MSVC6",   "MSVC6");
     oldExporters.set ("VS2010",  "Visual Studio 2010");
     oldExporters.set ("VS2012",  "Visual Studio 2012");
+    oldExporters.set ("VS2013",  "Visual Studio 2013");
 
     for (auto& key : oldExporters.getAllKeys())
     {
@@ -514,7 +515,7 @@ static int getJuceVersion (const String& v)
          + getVersionElement (v, 0);
 }
 
-static int getBuiltJuceVersion()
+static constexpr int getBuiltJuceVersion()
 {
     return JUCE_MAJOR_VERSION * 100000
          + JUCE_MINOR_VERSION * 1000
@@ -523,11 +524,7 @@ static int getBuiltJuceVersion()
 
 static bool isModuleNewerThanProjucer (const ModuleDescription& module)
 {
-    if (module.getID().startsWith ("juce_")
-        && getJuceVersion (module.getVersion()) > getBuiltJuceVersion())
-        return true;
-
-    return false;
+    return module.getID().startsWith ("juce_") && getJuceVersion (module.getVersion()) > getBuiltJuceVersion();
 }
 
 void Project::warnAboutOldProjucerVersion()
@@ -536,7 +533,6 @@ void Project::warnAboutOldProjucerVersion()
     {
         if (isModuleNewerThanProjucer ({ juceModule.second }))
         {
-            // Projucer is out of date!
             if (ProjucerApplication::getApp().isRunningCommandLine)
                 std::cout <<  "WARNING! This version of the Projucer is out-of-date!" << std::endl;
             else
@@ -859,6 +855,10 @@ bool Project::shouldBuildTargetType (ProjectType::Target::Type targetType) const
             return projectType.isAudioPlugin();
         case ProjectType::Target::unspecified:
             return false;
+        case ProjectType::Target::GUIApp:
+        case ProjectType::Target::ConsoleApp:
+        case ProjectType::Target::StaticLibrary:
+        case ProjectType::Target::DynamicLibrary:
         default:
             break;
     }
@@ -898,6 +898,7 @@ const char* ProjectType::Target::getName() const noexcept
         case UnityPlugIn:       return "Unity Plugin";
         case SharedCodeTarget:  return "Shared Code";
         case AggregateTarget:   return "All";
+        case unspecified:
         default:                return "undefined";
     }
 }
@@ -919,6 +920,8 @@ ProjectType::Target::TargetFileType ProjectType::Target::getTargetFileType() con
         case RTASPlugIn:        return pluginBundle;
         case UnityPlugIn:       return pluginBundle;
         case SharedCodeTarget:  return staticLibrary;
+        case AggregateTarget:
+        case unspecified:
         default:
             break;
     }
@@ -1010,7 +1013,7 @@ void Project::createPropertyEditors (PropertyListBuilder& props)
     props.add (new TextPropertyComponent (bundleIdentifierValue, "Bundle Identifier", 256, false),
                "A unique identifier for this product, mainly for use in OSX/iOS builds. It should be something like 'com.yourcompanyname.yourproductname'");
 
-    if (getProjectType().isAudioPlugin())
+    if (isAudioPluginProject())
         createAudioPluginPropertyEditors (props);
 
     {
@@ -1893,17 +1896,17 @@ String Project::getIAAPluginName()
 //==============================================================================
 bool Project::isAUPluginHost()
 {
-    return getEnabledModules().isModuleEnabled ("juce_audio_processors") && isConfigFlagEnabled ("JUCE_PLUGINHOST_AU");
+    return getEnabledModules().isModuleEnabled ("juce_audio_processors") && isConfigFlagEnabled ("JUCE_PLUGINHOST_AU", false);
 }
 
 bool Project::isVSTPluginHost()
 {
-    return getEnabledModules().isModuleEnabled ("juce_audio_processors") && isConfigFlagEnabled ("JUCE_PLUGINHOST_VST");
+    return getEnabledModules().isModuleEnabled ("juce_audio_processors") && isConfigFlagEnabled ("JUCE_PLUGINHOST_VST", false);
 }
 
 bool Project::isVST3PluginHost()
 {
-    return getEnabledModules().isModuleEnabled ("juce_audio_processors") && isConfigFlagEnabled ("JUCE_PLUGINHOST_VST3");
+    return getEnabledModules().isModuleEnabled ("juce_audio_processors") && isConfigFlagEnabled ("JUCE_PLUGINHOST_VST3", false);
 }
 
 //==============================================================================
@@ -2104,7 +2107,7 @@ void Project::rescanExporterPathModules (bool async)
         exporterPathsModuleList->scanPaths (getExporterModulePathsToScan (*this));
 }
 
-ModuleIDAndFolder Project::getModuleWithID (const String& id)
+AvailableModuleList::ModuleIDAndFolder Project::getModuleWithID (const String& id)
 {
     if (! getEnabledModules().shouldUseGlobalPath (id))
     {

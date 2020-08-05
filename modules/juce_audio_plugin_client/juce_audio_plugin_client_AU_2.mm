@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -24,6 +24,8 @@
   ==============================================================================
 */
 
+#if JucePlugin_Build_AU
+
 #ifdef __clang__
  #pragma clang diagnostic push
  #pragma clang diagnostic ignored "-Wparentheses"
@@ -37,11 +39,16 @@
  #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
  #pragma clang diagnostic ignored "-Wshadow-all"
  #pragma clang diagnostic ignored "-Wcast-align"
+ #pragma clang diagnostic ignored "-Wswitch-enum"
+ #pragma clang diagnostic ignored "-Wimplicit-fallthrough"
  #if __has_warning("-Wzero-as-null-pointer-constant")
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
  #endif
  #if __has_warning("-Wnullable-to-nonnull-conversion")
   #pragma clang diagnostic ignored "-Wnullable-to-nonnull-conversion"
+ #endif
+ #if __has_warning("-Wignored-qualifiers")
+  #pragma clang diagnostic ignored "-Wignored-qualifiers"
  #endif
 #endif
 
@@ -80,4 +87,6 @@
 
 #ifdef __clang__
  #pragma clang diagnostic pop
+#endif
+
 #endif

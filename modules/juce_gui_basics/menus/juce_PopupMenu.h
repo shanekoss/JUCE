@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -82,7 +82,7 @@ class JUCE_API  PopupMenu
 public:
     //==============================================================================
     /** Creates an empty popup menu. */
-    PopupMenu();
+    PopupMenu() = default;
 
     /** Creates a copy of another menu. */
     PopupMenu (const PopupMenu&);
@@ -192,6 +192,8 @@ public:
         Item& setColour (Colour) & noexcept;
         /** Sets the customComponent property (and returns a reference to this item to allow chaining). */
         Item& setCustomComponent (ReferenceCountedObjectPtr<CustomComponent> customComponent) & noexcept;
+        /** Sets the image property (and returns a reference to this item to allow chaining). */
+        Item& setImage (std::unique_ptr<Drawable>) & noexcept;
 
         /** Sets the isTicked flag (and returns a reference to this item to allow chaining). */
         Item&& setTicked (bool shouldBeTicked = true) && noexcept;
@@ -205,6 +207,8 @@ public:
         Item&& setColour (Colour) && noexcept;
         /** Sets the customComponent property (and returns a reference to this item to allow chaining). */
         Item&& setCustomComponent (ReferenceCountedObjectPtr<CustomComponent> customComponent) && noexcept;
+        /** Sets the image property (and returns a reference to this item to allow chaining). */
+        Item&& setImage (std::unique_ptr<Drawable>) && noexcept;
     };
 
     /** Adds an item to the menu.
@@ -395,7 +399,7 @@ public:
 
     /** Appends a separator to the menu, to help break it up into sections.
         The menu class is smart enough not to display separators at the top or bottom
-        of the menu, and it will replace mutliple adjacent separators with a single
+        of the menu, and it will replace multiple adjacent separators with a single
         one, so your code can be quite free and easy about adding these, and it'll
         always look ok.
     */
@@ -816,7 +820,7 @@ private:
     friend struct HelperClasses;
     friend class MenuBarComponent;
 
-    std::vector<Item> items;
+    Array<Item> items;
     WeakReference<LookAndFeel> lookAndFeel;
 
     Component* createWindow (const Options&, ApplicationCommandManager**) const;

@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
@@ -40,10 +40,10 @@ public:
     /** The release tag for this version, such as "beta", "alpha", "rc", etc */
     String releaseType;
 
-    /** A numberical value assosiated with the release tag, such as "beta 4" */
+    /** A numerical value associated with the release tag, such as "beta 4" */
     int releaseCount = 0;
 
-    /** The assosiated git commit that generated this firmware version */
+    /** The associated git commit that generated this firmware version */
     String commit;
 
     /** Identify "forced" firmware builds **/

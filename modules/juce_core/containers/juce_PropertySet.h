@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
@@ -121,7 +121,7 @@ public:
         @param keyName      the name of the property to set. (This mustn't be an empty string)
         @param value        the new value to set it to
     */
-    void setValue (const String& keyName, const var& value);
+    void setValue (StringRef keyName, const var& value);
 
     /** Sets a named property to an XML element.
 
@@ -130,7 +130,7 @@ public:
                             be set to an empty string
         @see getXmlValue
     */
-    void setValue (const String& keyName, const XmlElement* xml);
+    void setValue (StringRef keyName, const XmlElement* xml);
 
     /** This copies all the values from a source PropertySet to this one.
         This won't remove any existing settings, it just adds any that it finds in the source set.
@@ -143,7 +143,7 @@ public:
     */
     void removeValue (StringRef keyName);
 
-    /** Returns true if the properies include the given key. */
+    /** Returns true if the properties include the given key. */
     bool containsKey (StringRef keyName) const noexcept;
 
     /** Removes all values. */
@@ -190,7 +190,7 @@ public:
     PropertySet* getFallbackPropertySet() const noexcept                { return fallbackProperties; }
 
 protected:
-    /** Subclasses can override this to be told when one of the properies has been changed. */
+    /** Subclasses can override this to be told when one of the properties has been changed. */
     virtual void propertyChanged();
 
 private:

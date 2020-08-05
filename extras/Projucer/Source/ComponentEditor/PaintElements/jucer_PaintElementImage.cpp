@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -145,8 +145,8 @@ void PaintElementImage::fillInGeneratedCode (GeneratedCode& code, String& paintM
                 else
                     r << "    g.setColour (Colours::black.withAlpha (" << CodeHelpers::floatLiteral (opacity, 3) << "));\n";
 
-                r << "    jassert (" << imageVariable << " != 0);\n"
-                  << "    if (" << imageVariable << " != 0)\n"
+                r << "    jassert (" << imageVariable << " != nullptr);\n"
+                  << "    if (" << imageVariable << " != nullptr)\n"
                   << "        " << imageVariable  << "->drawWithin (g, Rectangle<int> (x, y, width, height).toFloat(),\n"
                   << "    " << String::repeatedString (" ", imageVariable.length() + 18)
                   << (mode == stretched ? "RectanglePlacement::stretchToFit"

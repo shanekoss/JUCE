@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -774,15 +774,16 @@ void LookAndFeel_V2::drawScrollbar (Graphics& g,
     g.setGradientFill (ColourGradient (Colour (0x10000000), gx1, gy1,
                        Colours::transparentBlack, gx2, gy2, false));
 
-    g.saveState();
+    {
+        Graphics::ScopedSaveState ss (g);
 
-    if (isScrollbarVertical)
-        g.reduceClipRegion (x + width / 2, y, width, height);
-    else
-        g.reduceClipRegion (x, y + height / 2, width, height);
+        if (isScrollbarVertical)
+            g.reduceClipRegion (x + width / 2, y, width, height);
+        else
+            g.reduceClipRegion (x, y + height / 2, width, height);
 
-    g.fillPath (thumbPath);
-    g.restoreState();
+        g.fillPath (thumbPath);
+    }
 
     g.setColour (Colour (0x4c000000));
     g.strokePath (thumbPath, PathStrokeType (0.4f));
@@ -1735,7 +1736,8 @@ void LookAndFeel_V2::drawResizableFrame (Graphics& g, int w, int h, const Border
         const Rectangle<int> fullSize (0, 0, w, h);
         auto centreArea = border.subtractedFrom (fullSize);
 
-        g.saveState();
+        Graphics::ScopedSaveState ss (g);
+
         g.excludeClipRegion (centreArea);
 
         g.setColour (Colour (0x50000000));
@@ -1743,8 +1745,6 @@ void LookAndFeel_V2::drawResizableFrame (Graphics& g, int w, int h, const Border
 
         g.setColour (Colour (0x19000000));
         g.drawRect (centreArea.expanded (1, 1));
-
-        g.restoreState();
     }
 }
 
@@ -2143,6 +2143,7 @@ void LookAndFeel_V2::createTabButtonShape (TabBarButton& button, Path& p, bool /
             p.lineTo (-overhang, -overhang);
             break;
 
+        case TabbedButtonBar::TabsAtTop:
         default:
             p.startNewSubPath (0.0f, h);
             p.lineTo (indent, 0.0f);
@@ -2834,7 +2835,7 @@ void LookAndFeel_V2::drawBevel (Graphics& g, const int x, const int y, const int
     if (g.clipRegionIntersects (Rectangle<int> (x, y, width, height)))
     {
         auto& context = g.getInternalContext();
-        context.saveState();
+        Graphics::ScopedSaveState ss (g);
 
         for (int i = bevelThickness; --i >= 0;)
         {
@@ -2850,8 +2851,6 @@ void LookAndFeel_V2::drawBevel (Graphics& g, const int x, const int y, const int
             context.setFill (bottomRightColour.withMultipliedAlpha (op  * 0.75f));
             context.fillRect (Rectangle<int> (x + width - i - 1, y + i + 1, 1, height - i * 2 - 2), false);
         }
-
-        context.restoreState();
     }
 }
 
@@ -3015,11 +3014,11 @@ void LookAndFeel_V2::drawGlassLozenge (Graphics& g,
 
     if (! (flatOnLeft || flatOnTop || flatOnBottom))
     {
-        g.saveState();
+        Graphics::ScopedSaveState ss (g);
+
         g.setGradientFill (cg);
         g.reduceClipRegion (intX, intY, intEdge, intH);
         g.fillPath (outline);
-        g.restoreState();
     }
 
     if (! (flatOnRight || flatOnTop || flatOnBottom))
@@ -3027,11 +3026,11 @@ void LookAndFeel_V2::drawGlassLozenge (Graphics& g,
         cg.point1.setX (x + width - edgeBlurRadius);
         cg.point2.setX (x + width);
 
-        g.saveState();
+        Graphics::ScopedSaveState ss (g);
+
         g.setGradientFill (cg);
         g.reduceClipRegion (intX + intW - intEdge, intY, 2 + intEdge, intH);
         g.fillPath (outline);
-        g.restoreState();
     }
 
     {

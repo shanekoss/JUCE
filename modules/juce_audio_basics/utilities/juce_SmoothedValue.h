@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
@@ -179,10 +179,18 @@ protected:
 */
 namespace ValueSmoothingTypes
 {
-    /** Used to indicate a linear smoothing between values. */
+    /**
+        Used to indicate a linear smoothing between values.
+
+        @tags{Audio}
+    */
     struct Linear {};
 
-    /** Used to indicate a smoothing between multiplicative values. */
+    /**
+        Used to indicate a smoothing between multiplicative values.
+
+        @tags{Audio}
+    */
     struct Multiplicative {};
 }
 

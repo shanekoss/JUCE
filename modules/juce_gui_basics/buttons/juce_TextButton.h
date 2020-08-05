@@ -2,14 +2,14 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
    By using JUCE, you agree to the terms of both the JUCE 5 End-User License
    Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   22nd April 2020).
 
    End User License Agreement: www.juce.com/juce-5-licence
    Privacy Policy: www.juce.com/juce-5-privacy-policy
@@ -54,7 +54,7 @@ public:
         @param buttonName           the text to put in the button (the component's name is also
                                     initially set to this string, but these can be changed later
                                     using the setName() and setButtonText() methods)
-        @param toolTip              an optional string to use as a toolip
+        @param toolTip              an optional string to use as a tooltip
     */
     TextButton (const String& buttonName, const String& toolTip);
 
