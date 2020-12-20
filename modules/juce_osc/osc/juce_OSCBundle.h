@@ -88,7 +88,7 @@ public:
         /** Returns a reference to the contained OSCMessage.
             If the OSCBundle element is not an OSCMessage, behaviour is undefined.
          */
-        const OSCMessage& getMessage() const;
+        OSCMessage& getMessage() const;
 
         /** Returns a reference to the contained OSCBundle.
             If the OSCBundle element is not an OSCBundle, behaviour is undefined.

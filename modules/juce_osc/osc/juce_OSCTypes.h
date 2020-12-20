@@ -51,6 +51,8 @@ public:
     static const OSCType string;
     static const OSCType blob;
     static const OSCType colour;
+    static const OSCType truthy;
+    static const OSCType falsey;
 
     static bool isSupportedType (OSCType type) noexcept
     {
@@ -58,7 +60,9 @@ public:
             || type == OSCTypes::float32
             || type == OSCTypes::string
             || type == OSCTypes::blob
-            || type == OSCTypes::colour;
+            || type == OSCTypes::colour
+            || type == OSCTypes::truthy
+            || type == OSCTypes::falsey;
     }
 };
 
